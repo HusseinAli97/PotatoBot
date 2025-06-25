@@ -57,9 +57,7 @@ client.once("ready", async () => {
         commands.push(command.data.toJSON());
     }
 
-    const rest = new REST({ version: "10" }).setToken(
-        process.env.DISCORD_TOKEN,
-    );
+    const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
     try {
         console.log("Started refreshing application (/) commands.");
@@ -72,4 +70,4 @@ client.once("ready", async () => {
     }
 });
 
-client.login(process.env.DISCORD_TOKEN || "your_bot_token_here");
+client.login(process.env.TOKEN);
