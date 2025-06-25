@@ -76,7 +76,7 @@ The application follows a modular event-driven architecture typical of Discord b
 
 ### Channel Structure Expected
 - `🛒┊order-here`: Main order initiation channel
-- `orders-details`: Staff order management
+- `order-details`: Staff order management
 - `reviews`: Customer feedback
 - Categories for each service type
 
