@@ -6,13 +6,13 @@
     },
     "channelNames": {
         "orderHere": "🛒┊order-here",
-        "ordersDetails": "orders-details",
+        "ordersDetails": "order-details",
         "ordersDetailsAlt": "order-details",
-        "reviews": "reviews"
+        "reviews": "✅┊𝐑𝐞𝐯𝐢𝐞𝐰𝐬"
     },
     "categories": {
         "paragonLeveling": "Paragon Leveling",
-        "powerleveling": "Powerleveling", 
+        "powerleveling": "Powerleveling",
         "gearing": "Gearing",
         "bossKills": "Boss Kills",
         "bossMats": "Boss Mats",
@@ -27,7 +27,7 @@
         },
         {
             "label": "Powerleveling",
-            "value": "powerleveling", 
+            "value": "powerleveling",
             "emoji": "🚀"
         },
         {
@@ -60,7 +60,7 @@
         },
         {
             "label": "Crypto",
-            "value": "crypto", 
+            "value": "crypto",
             "emoji": "🪙",
             "info": "Crypto:\nBinanceID => 446978223\nUstd-TRC20(TRX) => TB2pv2ezpFZuqRux91xKZg8ivUhNff11yd"
         },
