@@ -1,0 +1,92 @@
+✅ Bot Instructions for Replit AI (Bot name: PotatoBoosting)
+Create a Discord bot called PotatoBoosting with the following features:
+
+🔹 1. On Member Join:
+When a user joins the server, assign them a role named VsC.
+
+This role allows them to see the 🛒┊order-here channel.
+
+🔹 2. Order Start (Inside 🛒┊order-here):
+Create a button labeled Create Ticket or Order.
+
+When the user clicks it:
+
+Show a private Select Menu with the following options:
+
+Paragon Leveling
+
+Powerleveling
+
+Gearing
+
+Boss Kills
+
+Boss Mats
+
+Custom Order
+
+This menu should only be visible to the user who clicked, not to others.
+
+🔹 3. Ticket Channel Creation:
+Based on the user's selection (e.g., Boss Kills), create a private text channel in the related category (e.g., Boss Kills).
+
+The new channel name should include a unique ID to act as the order number.
+
+Automatically redirect the user to that channel.
+
+Reset the order-here channel to its default state.
+
+🔹 4. Inside the Ticket Channel:
+Show two buttons:
+
+Confirm
+
+Close
+
+If the user presses Close:
+
+Delete the ticket channel automatically (if not confirmed).
+
+If the user presses Confirm:
+
+Show a form requesting:
+
+Battle Tag
+
+How many bosses are needed
+
+Ready to start now or later?
+
+Pilot or Self-play?
+
+After submitting the form:
+
+Send the order details to a private channel for staff (mention the Staff role), including the unique order ID.
+
+Also send the same order info in a public staff channel called orders-details.
+
+🔹 5. Order Control by Staff:
+In the order channel, after confirmation, show buttons only visible to the Staff:
+
+Cancel
+
+Complete
+
+If Cancel is clicked:
+
+Delete the ticket and notify staff.
+
+If Complete is clicked:
+
+Move the channel to a category called Completed Orders.
+
+Revoke the user’s access to that channel after 4 hours.
+
+Remove the user’s role that gave access to the ticket.
+
+Send a private message to the user with a button/link that leads to a Reviews channel.
+
+🔹 6. Channel Permissions:
+Each order channel should only be visible to the user and the Staff team.
+
+No one else should have access.
