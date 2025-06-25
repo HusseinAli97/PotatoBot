@@ -65,7 +65,7 @@ async function handleTicketClose(interaction, orderId) {
             } catch (error) {
                 console.error("Error deleting channel:", error);
             }
-        }, 30000);
+        }, 5000);
     } catch (error) {
         console.error("Error closing ticket:", error);
         await interaction.reply({
@@ -444,7 +444,7 @@ async function handleStaffCancel(interaction, orderId) {
             } catch (error) {
                 console.error("Error deleting cancelled order channel:", error);
             }
-        }, 10000);
+        }, 5000);
     } catch (error) {
         console.error("Error cancelling order:", error);
         await interaction.reply({
