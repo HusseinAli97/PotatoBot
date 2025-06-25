@@ -31,7 +31,7 @@ async function handleOrderInteraction(interaction) {
             ephemeral: true
         });
 
-        setTimeout(() => interaction.deleteReply().catch(() => {}), 5000);
+        setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
     }
 
     else if (interaction.isStringSelectMenu() && interaction.customId === 'service_select') {
@@ -43,7 +43,7 @@ async function handleOrderInteraction(interaction) {
                 content: '❌ Invalid service selection.',
                 ephemeral: true
             });
-            setTimeout(() => interaction.deleteReply().catch(() => {}), 5000);
+            setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
             return;
         }
 
@@ -52,7 +52,7 @@ async function handleOrderInteraction(interaction) {
                 content: '🎫 Creating your ticket, please wait...',
                 ephemeral: true
             });
-            setTimeout(() => interaction.deleteReply().catch(() => {}), 5000);
+            setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
 
             const categoryName = getCategoryName(selectedService);
             let category = interaction.guild.channels.cache.find(
@@ -80,7 +80,7 @@ async function handleOrderInteraction(interaction) {
                     content: '❌ Unable to create ticket category. Please contact staff to check bot permissions.',
                     ephemeral: true
                 });
-                setTimeout(() => interaction.deleteReply().catch(() => {}), 5000);
+                setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
                 return;
             }
 
@@ -106,7 +106,7 @@ async function handleOrderInteraction(interaction) {
                     content: `❌ Bot lacks permissions to create channels in the "${category.name}" category.`,
                     ephemeral: true
                 });
-                setTimeout(() => interaction.deleteReply().catch(() => {}), 5000);
+                setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
                 return;
             }
 
@@ -155,7 +155,7 @@ async function handleOrderInteraction(interaction) {
                     content: '❌ Failed to create your ticket. Please try again or contact staff.',
                     ephemeral: true
                 });
-                setTimeout(() => interaction.deleteReply().catch(() => {}), 5000);
+                setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
             }
         }
     }
