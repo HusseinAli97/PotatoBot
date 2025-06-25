@@ -41,7 +41,7 @@ module.exports = {
             // حذف الرسالة بعد 5 ثوانٍ
             setTimeout(() => {
                 interaction.deleteReply().catch(() => {});
-            }, 5000);
+            }, 30000);
         } catch (error) {
             console.error("Error setting up order system:", error);
             await interaction.reply({
