@@ -532,7 +532,7 @@ async function handleStaffComplete(interaction, orderId) {
 
                     await user
                         .send({
-                            content: `✅ Your order ${orderId} has been completed! We'd love to hear your feedback.`,
+                            content: `✅ Your order ${orderId} has been completed!\nWe'd love to hear your feedback.\nPlease leave a review in the ${reviewsChannel.name} channel:`,
                             components: [reviewButton],
                         })
                         .catch((error) => {
@@ -541,11 +541,13 @@ async function handleStaffComplete(interaction, orderId) {
                                 error.message
                             );
                         });
+                } else {
+                    console.log("✅ Reviews channel not found.");
                 }
             } catch (error) {
                 console.error("Error in completion cleanup:", error);
             }
-        }, config.completionDelay);
+        }, config.completionDelay || 4 * 60 * 60 * 1000);
     } catch (error) {
         console.error("Error completing order:", error);
         await interaction.reply({
