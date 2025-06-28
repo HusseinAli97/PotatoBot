@@ -265,7 +265,6 @@ async function handleOrderForm(interaction, orderId) {
         await updateOrder(orderId, updateData);
         const updatedOrder = await getOrder(orderId);
 
-
         const user = await interaction.client.users.fetch(updatedOrder.user_id);
 
         // Create order details embed
@@ -618,6 +617,8 @@ async function handlePaymentMethodSelection(interaction, orderId) {
             payment_method: updatedOrder.payment_method || "",
             status: updatedOrder.status || "",
             created_at: updatedOrder.created_at || "",
+            channel_id: channel?.id || "",
+            updated_at: new Date().toISOString(),
         };
 
         const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net"; // غيره بـ رابط Webhook بتاعك
