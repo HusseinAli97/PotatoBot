@@ -30,6 +30,7 @@ function initDatabase() {
                 kills_amount TEXT,
                 mats_amount TEXT,
                 custom_description TEXT,
+                hours_amount TEXT,
                 payment_method TEXT,
                 status TEXT DEFAULT 'pending',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
