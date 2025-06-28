@@ -14,6 +14,7 @@ const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 const fetch = require("node-fetch");
 
+
 async function handleTicketInteraction(interaction) {
     if (interaction.isButton()) {
         const [action, type, orderId] = interaction.customId.split("_");
@@ -582,6 +583,7 @@ async function handleStaffComplete(interaction, orderId) {
 
 async function handlePaymentMethodSelection(interaction, orderId) {
     try {
+        const serverId = interaction.guild.id;
         const paymentMethod = interaction.values[0];
         const paymentConfig = config.paymentMethods.find(
             (p) => p.value === paymentMethod
@@ -617,8 +619,9 @@ async function handlePaymentMethodSelection(interaction, orderId) {
             payment_method: updatedOrder.payment_method || "",
             status: updatedOrder.status || "",
             created_at: updatedOrder.created_at || "",
-            channel_id: channel?.id || "",
             updated_at: new Date().toISOString(),
+            channel_link_text: `Go to Ticket`,
+            channel_link: `https://discord.com/channels/${serverId}/${interaction.channel.id}`,
         };
 
         const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net"; // غيره بـ رابط Webhook بتاعك
