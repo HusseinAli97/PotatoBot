@@ -285,7 +285,7 @@ async function handleOrderForm(interaction, orderId) {
                 created_at: updatedOrder.created_at || "",
             };
 
-            const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net"; // غيّر دا برابطك الفعلي
+            const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net";
 
             await fetch(webhookUrl, {
                 method: "POST",
