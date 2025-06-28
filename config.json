@@ -17,7 +17,8 @@
         "bossKills": "Boss Kills",
         "bossMats": "Boss Mats",
         "customOrder": "Custom Order",
-        "completedOrders": "Completed Orders"
+        "completedOrders": "Completed Orders",
+        "hourlyDiving": "Hourly Diving"
     },
     "services": [
         {
@@ -49,6 +50,11 @@
             "label": "Custom Order",
             "value": "custom_order",
             "emoji": "🛠️"
+        },
+        {
+            "label": "Hourly Diving",
+            "value": "hourly_diving",
+            "emoji": "⏱️"
         }
     ],
     "paymentMethods": [
