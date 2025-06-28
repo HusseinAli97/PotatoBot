@@ -171,6 +171,24 @@ async function handleTicketConfirm(interaction, orderId) {
             thirdActionRow,
             fourthActionRow
         );
+    } else if (serviceType === "hourly_diving") {
+        const hoursInput = new TextInputBuilder()
+            .setCustomId("hours_amount")
+            .setLabel("How many hours do you need?")
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder("e.g., 2 or 5")
+            .setRequired(true);
+
+        const fourthActionRow = new ActionRowBuilder().addComponents(
+            hoursInput
+        );
+
+        modal.addComponents(
+            firstActionRow,
+            secondActionRow,
+            thirdActionRow,
+            fourthActionRow
+        );
     } else if (serviceType === "custom_order") {
         const descriptionInput = new TextInputBuilder()
             .setCustomId("custom_description")
@@ -224,6 +242,10 @@ async function handleOrderForm(interaction, orderId) {
             const toLevel = interaction.fields.getTextInputValue("to_level");
             updateData.from_level = fromLevel;
             updateData.to_level = toLevel;
+        } else if (serviceType === "hourly_diving") {
+            const hoursAmount =
+                interaction.fields.getTextInputValue("hours_amount");
+            updateData.hours_amount = hoursAmount;
         } else if (serviceType === "boss_kills") {
             const killsAmount =
                 interaction.fields.getTextInputValue("kills_amount");
