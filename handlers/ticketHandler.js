@@ -12,6 +12,8 @@ const {
 const { getOrder, updateOrder, deleteOrder } = require("../database");
 const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
+const fetch = require("node-fetch");
+
 
 async function handleTicketInteraction(interaction) {
     if (interaction.isButton()) {
@@ -262,8 +264,40 @@ async function handleOrderForm(interaction, orderId) {
 
         // Update order in database
         await updateOrder(orderId, updateData);
-
         const updatedOrder = await getOrder(orderId);
+
+        try {
+            const webhookPayload = {
+                order_id: updatedOrder.order_id,
+                user_id: updatedOrder.user_id,
+                service_type: updatedOrder.service_type,
+                battle_tag: updatedOrder.battle_tag || "",
+                pilot_type: updatedOrder.pilot_type || "",
+                express_type: updatedOrder.express_type || "",
+                from_level: updatedOrder.from_level || "",
+                to_level: updatedOrder.to_level || "",
+                kills_amount: updatedOrder.kills_amount || "",
+                mats_amount: updatedOrder.mats_amount || "",
+                custom_description: updatedOrder.custom_description || "",
+                hours_amount: updatedOrder.hours_amount || "",
+                payment_method: updatedOrder.payment_method || "",
+                status: updatedOrder.status || "",
+                created_at: updatedOrder.created_at || "",
+            };
+
+            const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net"; // غيّر دا برابطك الفعلي
+
+            await fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(webhookPayload),
+            });
+
+            console.log("✅ Sent order data to Google Sheets webhook");
+        } catch (error) {
+            console.error("❌ Failed to send data to webhook:", error);
+        }
+
         const user = await interaction.client.users.fetch(updatedOrder.user_id);
 
         // Create order details embed
