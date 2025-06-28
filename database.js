@@ -1,22 +1,23 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
 
-const dbPath = path.join(__dirname, 'orders.db');
+const dbPath = path.join(__dirname, "orders.db");
 let db;
 
 function initDatabase() {
     return new Promise((resolve, reject) => {
         db = new sqlite3.Database(dbPath, (err) => {
             if (err) {
-                console.error('Error opening database:', err);
+                console.error("Error opening database:", err);
                 reject(err);
                 return;
             }
-            
-            console.log('Connected to SQLite database');
-            
+
+            console.log("Connected to SQLite database");
+
             // Create orders table
-            db.run(`CREATE TABLE IF NOT EXISTS orders (
+            db.run(
+                `CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 order_id TEXT UNIQUE,
                 user_id TEXT NOT NULL,
@@ -35,16 +36,43 @@ function initDatabase() {
                 status TEXT DEFAULT 'pending',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 completed_at DATETIME
-            )`, (err) => {
-                if (err) {
-                    console.error('Error creating orders table:', err);
-                    reject(err);
-                } else {
-                    console.log('Orders table ready');
-                    resolve();
+            )`,
+                (err) => {
+                    if (err) {
+                        console.error("Error creating orders table:", err);
+                        reject(err);
+                    } else {
+                        console.log("Orders table ready");
+                        addColumnIfNotExists("hours_amount", "TEXT");
+
+                        resolve();
+                    }
                 }
-            });
+            );
         });
+    });
+}
+// Check if column exists, add it if not
+function addColumnIfNotExists(column, type) {
+    db.get(`PRAGMA table_info(orders);`, (err, rows) => {
+        if (err) {
+            console.error("Error reading table info:", err);
+            return;
+        }
+
+        const exists = rows.some((row) => row.name === column);
+        if (!exists) {
+            db.run(
+                `ALTER TABLE orders ADD COLUMN ${column} ${type};`,
+                (err) => {
+                    if (err) {
+                        console.error(`Error adding column ${column}:`, err);
+                    } else {
+                        console.log(`Column "${column}" added successfully.`);
+                    }
+                }
+            );
+        }
     });
 }
 
@@ -57,11 +85,11 @@ function generateOrderId() {
 function createOrder(userId, serviceType, channelId) {
     return new Promise((resolve, reject) => {
         const orderId = generateOrderId();
-        
+
         db.run(
             `INSERT INTO orders (order_id, user_id, service_type, channel_id) VALUES (?, ?, ?, ?)`,
             [orderId, userId, serviceType, channelId],
-            function(err) {
+            function (err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -76,18 +104,18 @@ function updateOrder(orderId, data) {
     return new Promise((resolve, reject) => {
         const fields = [];
         const values = [];
-        
+
         for (const [key, value] of Object.entries(data)) {
             fields.push(`${key} = ?`);
             values.push(value);
         }
-        
+
         values.push(orderId);
-        
+
         db.run(
-            `UPDATE orders SET ${fields.join(', ')} WHERE order_id = ?`,
+            `UPDATE orders SET ${fields.join(", ")} WHERE order_id = ?`,
             values,
-            function(err) {
+            function (err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -119,7 +147,7 @@ function deleteOrder(orderId) {
         db.run(
             `DELETE FROM orders WHERE order_id = ?`,
             [orderId],
-            function(err) {
+            function (err) {
                 if (err) {
                     reject(err);
                 } else {
@@ -136,5 +164,5 @@ module.exports = {
     updateOrder,
     getOrder,
     deleteOrder,
-    generateOrderId
+    generateOrderId,
 };
