@@ -54,7 +54,7 @@ function initDatabase() {
 }
 // Check if column exists, add it if not
 function addColumnIfNotExists(column, type) {
-    db.get(`PRAGMA table_info(orders);`, (err, rows) => {
+    db.all(`PRAGMA table_info(orders);`, (err, rows) => {
         if (err) {
             console.error("Error reading table info:", err);
             return;
