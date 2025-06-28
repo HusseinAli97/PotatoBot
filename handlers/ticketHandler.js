@@ -14,7 +14,6 @@ const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 const fetch = require("node-fetch");
 
-
 async function handleTicketInteraction(interaction) {
     if (interaction.isButton()) {
         const [action, type, orderId] = interaction.customId.split("_");
@@ -524,6 +523,24 @@ async function handleStaffComplete(interaction, orderId) {
         // Move channel to completed category
         await interaction.channel.setParent(completedCategory);
 
+        const webhookPayload = {
+            order_id: order.order_id,
+            progress: "✅Completed ", // ✅ تحديث الحالة فقط
+            updated_at: new Date().toISOString(),
+        };
+
+        const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net";
+
+        try {
+            await fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(webhookPayload),
+            });
+            console.log("✅ Updated progress in Google Sheet");
+        } catch (error) {
+            console.error("❌ Failed to update progress in webhook:", error);
+        }
         await interaction.reply({
             content: `✅ Order ${orderId} has been marked as completed by ${interaction.user}. Customer access will be revoked in 4 hours.`,
         });
@@ -622,6 +639,7 @@ async function handlePaymentMethodSelection(interaction, orderId) {
             updated_at: new Date().toISOString(),
             channel_link_text: `Go to Ticket`,
             channel_link: `https://discord.com/channels/${serverId}/${interaction.channel.id}`,
+            progress: "in_progress",
         };
 
         const webhookUrl = "https://eogzesx2oh7na64.m.pipedream.net"; // غيره بـ رابط Webhook بتاعك
