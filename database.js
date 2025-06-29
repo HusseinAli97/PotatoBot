@@ -165,6 +165,7 @@ function getCompletedOrders() {
                 if (err) {
                     reject(err);
                 } else {
+                    console.log("🔍 Found completed orders:", rows); // ← أضف هذا السطر
                     resolve(rows);
                 }
             }
