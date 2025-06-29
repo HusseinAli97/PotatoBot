@@ -157,7 +157,20 @@ function deleteOrder(orderId) {
         );
     });
 }
-
+function getCompletedOrders() {
+    return new Promise((resolve, reject) => {
+        db.all(
+            `SELECT * FROM orders WHERE status = 'completed' ORDER BY completed_at DESC`,
+            (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            }
+        );
+    });
+}
 module.exports = {
     initDatabase,
     createOrder,
@@ -165,4 +178,5 @@ module.exports = {
     getOrder,
     deleteOrder,
     generateOrderId,
+    getCompletedOrders,
 };
