@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potato Boosting Price List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Diablo-inspired font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            background-image: url('https://www.transparenttextures.com/patterns/cracks.png'), linear-gradient(to bottom, #1a0000, #000000);
+            background-repeat: repeat, no-repeat;
+            color: #f0e6d2; /* Parchment-like text color */
+        }
+
+        .font-diablo {
+            font-family: 'Cinzel Decorative', cursive;
+        }
+
+        /* Glowing text effect for the title */
+        .title-glow {
+            color: #ffc700;
+            text-shadow:
+                0 0 7px #ffc700,
+                0 0 10px #ffc700,
+                0 0 21px #ffc700,
+                0 0 42px #ff8000,
+                0 0 82px #ff8000,
+                0 0 92px #ff8000,
+                0 0 102px #ff8000,
+                0 0 151px #ff8000;
+        }
+        
+        /* Main container with a fiery border */
+        .main-container {
+            border: 4px solid #4a2c0f;
+            box-shadow: 0 0 20px 5px rgba(255, 100, 0, 0.5), inset 0 0 15px 3px rgba(40, 20, 0, 0.8);
+            background: rgba(10, 5, 0, 0.6);
+            backdrop-filter: blur(5px);
+            border-radius: 0.75rem;
+        }
+
+        /* Table styling */
+        .table-diablo {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .table-diablo th, .table-diablo td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 2px solid #634f31; /* Chiseled stone look */
+            white-space: nowrap;
+        }
+
+        .table-diablo th {
+            color: #ffb74d; /* Fiery orange for headers */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom-width: 4px;
+        }
+
+        /* Highlight for the "YOU PAY" column */
+        .you-pay-col {
+            font-weight: 700;
+            color: #ffeb3b; /* Bright gold color */
+            text-shadow: 0 0 5px #ffc107;
+            font-size: 1.1rem;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: #a1887f; /* Faded stone color */
+        }
+
+        .discount-col {
+            color: #81c784; /* Green for discount */
+            font-weight: 600;
+        }
+        
+        /* Last row without a border */
+        .table-diablo tr:last-child td {
+            border-bottom: none;
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="main-container max-w-7xl w-full mx-auto p-6 md:p-8">
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="font-diablo text-4xl md:text-6xl font-bold title-glow mb-4">POTATO BOOSTING</h1>
+            <img src="https://media.discordapp.net/attachments/1036736838586617959/1389921702636683396/20250625_0808_Epic_Potato_Mascot_remix_01jyjqn3jfes78j539nv16by58.png?ex=686660f5&is=68650f75&hm=bb9779f221ece18d431c7555fc650ffd1d377694f12905252c1c950cc5f83573&=&format=webp&quality=lossless" 
+                 alt="Potato Boosting Mascot"
+                 class="w-48 h-48 md:w-64 md:h-64 mx-auto my-4 object-contain"
+                 onerror="this.onerror=null;this.src='https://placehold.co/256x256/000000/ff8000?text=Mascot';">
+        </header>
+
+        <!-- Price List Table -->
+        <div class="overflow-x-auto">
+            <table class="table-diablo">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Original Price</th>
+                        <th>YOU PAY</th>
+                        <th>% Discount</th>
+                        <th>Gift</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tormented Bosses Kill (10)</td>
+                        <td class="original-price">$90</td>
+                        <td class="you-pay-col">$60</td>
+                        <td class="discount-col">33% OFF</td>
+                        <td>🎁 5 Free Boss Kills</td>
+                    </tr>
+                    <tr>
+                        <td>Seasonal Powerleveling (1–60)</td>
+                        <td class="original-price">$62</td>
+                        <td class="you-pay-col">$27.25</td>
+                        <td class="discount-col">56% OFF</td>
+                        <td>  5 Free Boss Kills</td>
+                    </tr>
+                    <tr>
+                        <td>Paragon Leveling (1–150)</td>
+                        <td class="original-price">$92</td>
+                        <td class="you-pay-col">$41.30</td>
+                        <td class="discount-col">55% OFF</td>
+                        <td>🎁 5 Free Boss Kills</td>
+                    </tr>
+                    <tr>
+                        <td>Diablo IV Gold (1 Billion)</td>
+                        <td class="original-price">$20</td>
+                        <td class="you-pay-col">$10</td>
+                        <td class="discount-col">50% OFF</td>
+                        <td>🎁 5 Free Boss Kills</td>
+                    </tr>
+                    <tr>
+                        <td>Nightmare Dungeons (10 Runs)</td>
+                        <td class="original-price">$127</td>
+                        <td class="you-pay-col">$60</td>
+                        <td class="discount-col">53% OFF</td>
+                        <td>🎁 5 Free Boss Kills</td>
+                    </tr>
+                    <tr>
+                        <td>Runewords – Legendary</td>
+                        <td class="original-price">$7</td>
+                        <td class="you-pay-col">$4</td>
+                        <td class="discount-col">43% OFF</td>
+                        <td>🎁 Free Rare Rune</td>
+                    </tr>
+                    <tr>
+                        <td>Runewords – Rare/Common</td>
+                        <td class="original-price">$5</td>
+                        <td class="you-pay-col">$2</td>
+                        <td class="discount-col">60% OFF</td>
+                        <td>🎁 Included in Package</td>
+                    </tr>
+                    <tr>
+                        <td>Build Service – Full Setup</td>
+                        <td class="original-price">$180</td>
+                        <td class="you-pay-col">$100</td>
+                        <td class="discount-col">44% OFF</td>
+                        <td>🎁 3 Extra Gifts</td>
+                    </tr>
+                    <tr>
+                        <td>🧑‍💼 Hire a Pro (1 Hour)</td>
+                        <td class="original-price">$20</td>
+                        <td class="you-pay-col">$12</td>
+                        <td class="discount-col">40% OFF</td>
+                        <td>❌ No Gift</td>
+                    </tr>
+                    <tr>
+                        <td>🟣 Mythic Item Farming</td>
+                        <td class="original-price">$170</td>
+                        <td class="you-pay-col">$90</td>
+                        <td class="discount-col">47% OFF</td>
+                        <td>❌ No Gift</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>
+ 
