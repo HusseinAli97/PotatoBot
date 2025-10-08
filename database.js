@@ -1,50 +1,66 @@
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const fs = require("fs");
 
-const dbPath = path.join(__dirname, "orders.db");
+// 🧱 إنشاء مجلد دائم لتخزين قاعدة البيانات ونسخها الاحتياطية
+const dataDir = path.join(__dirname, "data");
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// 🗃️ المسار الثابت للقاعدة
+const dbPath = path.join(dataDir, "orders.db");
 let db;
 
 function initDatabase() {
     return new Promise((resolve, reject) => {
         db = new sqlite3.Database(dbPath, (err) => {
             if (err) {
-                console.error("Error opening database:", err);
+                console.error(
+                    "❌ Error opening database:",
+                    err
+                );
                 reject(err);
                 return;
             }
 
-            console.log("Connected to SQLite database");
+            console.log(
+                `✅ Connected to SQLite database at: ${dbPath}`
+            );
 
-            // Create orders table
+            // 🧾 إنشاء جدول الأوردرات إذا لم يكن موجودًا
             db.run(
                 `CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                order_id TEXT UNIQUE,
-                user_id TEXT NOT NULL,
-                service_type TEXT NOT NULL,
-                channel_id TEXT,
-                battle_tag TEXT,
-                pilot_type TEXT,
-                express_type TEXT,
-                from_level TEXT,
-                to_level TEXT,
-                kills_amount TEXT,
-                mats_amount TEXT,
-                custom_description TEXT,
-                hours_amount TEXT,
-                payment_method TEXT,
-                status TEXT DEFAULT 'pending',
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                completed_at DATETIME
-            )`,
-                (err) => {
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id TEXT UNIQUE,
+                    user_id TEXT NOT NULL,
+                    service_type TEXT NOT NULL,
+                    channel_id TEXT,
+                    battle_tag TEXT,
+                    pilot_type TEXT,
+                    express_type TEXT,
+                    from_level TEXT,
+                    to_level TEXT,
+                    kills_amount TEXT,
+                    mats_amount TEXT,
+                    custom_description TEXT,
+                    hours_amount TEXT,
+                    payment_method TEXT,
+                    status TEXT DEFAULT 'pending',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    completed_at DATETIME
+                )`,
+                async (err) => {
                     if (err) {
-                        console.error("Error creating orders table:", err);
+                        console.error(
+                            "❌ Error creating orders table:",
+                            err
+                        );
                         reject(err);
                     } else {
-                        console.log("Orders table ready");
-                        addColumnIfNotExists("hours_amount", "TEXT");
-
+                        console.log("🗂️ Orders table ready - database.js:61");
+                        await addColumnIfNotExists("hours_amount", "TEXT");
+                        await backupDatabase(); // ← نسخ احتياطي عند كل تشغيل
                         resolve();
                     }
                 }
@@ -52,36 +68,52 @@ function initDatabase() {
         });
     });
 }
-// Check if column exists, add it if not
-function addColumnIfNotExists(column, type) {
-    db.all(`PRAGMA table_info(orders);`, (err, rows) => {
-        if (err) {
-            console.error("Error reading table info:", err);
-            return;
-        }
 
-        const exists = rows.some((row) => row.name === column);
-        if (!exists) {
-            db.run(
-                `ALTER TABLE orders ADD COLUMN ${column} ${type};`,
-                (err) => {
-                    if (err) {
-                        console.error(`Error adding column ${column}:`, err);
-                    } else {
-                        console.log(`Column "${column}" added successfully.`);
+// ✅ التحقق من الأعمدة وإضافتها إن لم تكن موجودة
+function addColumnIfNotExists(column, type) {
+    return new Promise((resolve) => {
+        db.all(`PRAGMA table_info(orders);`, (err, rows) => {
+            if (err) {
+                console.error(
+                    "❌ Error reading table info:",
+                    err
+                );
+                return resolve();
+            }
+
+            const exists = rows.some((row) => row.name === column);
+            if (!exists) {
+                db.run(
+                    `ALTER TABLE orders ADD COLUMN ${column} ${type};`,
+                    (err) => {
+                        if (err) {
+                            console.error(
+                                `❌ Error adding column ${column}:`,
+                                err
+                            );
+                        } else {
+                            console.log(
+                                `🆕 Column "${column}" added successfully.`
+                            );
+                        }
+                        resolve();
                     }
-                }
-            );
-        }
+                );
+            } else {
+                resolve();
+            }
+        });
     });
 }
 
+// 🧩 توليد معرف أوردر فريد
 function generateOrderId() {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substr(2, 5);
     return `ORD-${timestamp}-${random}`.toUpperCase();
 }
 
+// 🧾 إنشاء أوردر جديد
 function createOrder(userId, serviceType, channelId) {
     return new Promise((resolve, reject) => {
         const orderId = generateOrderId();
@@ -93,6 +125,9 @@ function createOrder(userId, serviceType, channelId) {
                 if (err) {
                     reject(err);
                 } else {
+                    console.log(
+                        `🟢 Created new order: ${orderId}`
+                    );
                     resolve(orderId);
                 }
             }
@@ -100,6 +135,7 @@ function createOrder(userId, serviceType, channelId) {
     });
 }
 
+// 🔄 تحديث أوردر
 function updateOrder(orderId, data) {
     return new Promise((resolve, reject) => {
         const fields = [];
@@ -119,6 +155,9 @@ function updateOrder(orderId, data) {
                 if (err) {
                     reject(err);
                 } else {
+                    console.log(
+                        `🟠 Updated order: ${orderId}`
+                    );
                     resolve(this.changes);
                 }
             }
@@ -126,6 +165,7 @@ function updateOrder(orderId, data) {
     });
 }
 
+// 🔍 استرجاع أوردر
 function getOrder(orderId) {
     return new Promise((resolve, reject) => {
         db.get(
@@ -142,6 +182,7 @@ function getOrder(orderId) {
     });
 }
 
+// ❌ حذف أوردر
 function deleteOrder(orderId) {
     return new Promise((resolve, reject) => {
         db.run(
@@ -151,12 +192,17 @@ function deleteOrder(orderId) {
                 if (err) {
                     reject(err);
                 } else {
+                    console.log(
+                        `🔴 Deleted order: ${orderId}`
+                    );
                     resolve(this.changes);
                 }
             }
         );
     });
 }
+
+// 🧾 استرجاع الأوردرات المكتملة
 function getCompletedOrders() {
     return new Promise((resolve, reject) => {
         db.all(
@@ -165,13 +211,37 @@ function getCompletedOrders() {
                 if (err) {
                     reject(err);
                 } else {
-                    console.log("🔍 Found completed orders:", rows); // ← أضف هذا السطر
+                    console.log(
+                        `📦 Found ${rows.length} completed orders.`
+                    );
                     resolve(rows);
                 }
             }
         );
     });
 }
+
+// 💾 دالة النسخ الاحتياطي التلقائي
+async function backupDatabase() {
+    try {
+        const timestamp = new Date()
+            .toISOString()
+            .replace(/[:.]/g, "-")
+            .replace("T", "_")
+            .split("Z")[0];
+        const backupPath = path.join(dataDir, `orders_backup_${timestamp}.db`);
+
+        await fs.promises.copyFile(dbPath, backupPath);
+        console.log(`🧩 Backup created: ${backupPath} - database.js:235`);
+    } catch (error) {
+        console.error(
+            "⚠️ Failed to create database backup:",
+            error
+        );
+    }
+}
+
+// 🧩 تصدير الدوال
 module.exports = {
     initDatabase,
     createOrder,
@@ -180,4 +250,5 @@ module.exports = {
     deleteOrder,
     generateOrderId,
     getCompletedOrders,
+    backupDatabase,
 };
