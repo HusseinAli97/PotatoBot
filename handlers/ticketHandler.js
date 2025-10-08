@@ -64,14 +64,11 @@ async function handleTicketClose(interaction, orderId) {
             try {
                 await interaction.channel.delete();
             } catch (error) {
-                console.error(
-                    "Error deleting channel:",
-                    error
-                );
+                console.error("Error deleting channel: - ticketHandler.js:67", error);
             }
         }, 5000);
     } catch (error) {
-        console.error("Error closing ticket: - ticketHandler.js:74", error);
+        console.error("Error closing ticket: - ticketHandler.js:71", error);
         await interaction.reply({
             content: "❌ Failed to close the ticket.",
             ephemeral: true,
@@ -301,13 +298,11 @@ async function handleOrderForm(interaction, orderId) {
         }
 
         // List all channels for debugging
-        console.log("All channels in server: - ticketHandler.js:304");
+        console.log("All channels in server: - ticketHandler.js:301");
         interaction.guild.channels.cache.forEach((channel) => {
             if (channel.type === 0) {
                 // Text channels only
-                console.log(
-                    `Channel: "${channel.name}"`
-                );
+                console.log(`Channel: "${channel.name}" - ticketHandler.js:305`);
             }
         });
 
@@ -331,19 +326,12 @@ async function handleOrderForm(interaction, orderId) {
                     content: "New order received and confirmed",
                     embeds: [embed],
                 });
-                console.log(
-                    "Successfully sent to orderdetails channel"
-                );
+                console.log("Successfully sent to orderdetails channel - ticketHandler.js:329");
             } catch (error) {
-                console.error(
-                    "Error sending to orderdetails channel:",
-                    error
-                );
+                console.error("Error sending to orderdetails channel: - ticketHandler.js:331", error);
             }
         } else {
-            console.error(
-                "orderdetails channel not found!"
-            );
+            console.error("orderdetails channel not found! - ticketHandler.js:334");
         }
 
         // Send direct messages to all staff members
@@ -393,10 +381,7 @@ async function handleOrderForm(interaction, orderId) {
                     `Attempted to send DM notifications to ${staffMembers.size} staff members`
                 );
             } catch (error) {
-                console.error(
-                    "Error sending staff DM notifications:",
-                    error
-                );
+                console.error("Error sending staff DM notifications: - ticketHandler.js:384", error);
             }
         }
 
@@ -436,10 +421,7 @@ async function handleOrderForm(interaction, orderId) {
             components: [paymentSelectMenu, staffButtons],
         });
     } catch (error) {
-        console.error(
-            "Error processing order form:",
-            error
-        );
+        console.error("Error processing order form: - ticketHandler.js:424", error);
         await interaction.reply({
             content: "❌ Failed to process your order. Please try again.",
             ephemeral: true,
@@ -483,14 +465,11 @@ async function handleStaffCancel(interaction, orderId) {
             try {
                 await interaction.channel.delete();
             } catch (error) {
-                console.error(
-                    "Error deleting cancelled order channel:",
-                    error
-                );
+                console.error("Error deleting cancelled order channel: - ticketHandler.js:468", error);
             }
         }, 5000);
     } catch (error) {
-        console.error("Error cancelling order: - ticketHandler.js:493", error);
+        console.error("Error cancelling order: - ticketHandler.js:472", error);
         await interaction.reply({
             content: "❌ Failed to cancel the order.",
             ephemeral: true,
@@ -548,40 +527,183 @@ async function handleStaffComplete(interaction, orderId) {
                 name: baseCategoryName,
                 type: ChannelType.GuildCategory,
             });
-            console.log(
-                `✅ Created base category: ${baseCategoryName}`
-            );
+            console.log(`✅ Created base category: ${baseCategoryName} - ticketHandler.js:530`);
         }
 
         // ✅ تحقق من الحد الأقصى (50 قناة في الكاتيجوري)
-        if (completedCategory.children.cache.size >= 50) {
-            // شوف لو في كاتيجوري شهرية موجودة
-            let monthlyCategory = interaction.guild.channels.cache.find(
-                (c) =>
-                    c.type === ChannelType.GuildCategory &&
-                    c.name === `${baseCategoryName} [${month}-${year}]`
+        async function handleStaffComplete(interaction, orderId) {
+            // ✅ تحقق من صلاحية المستخدم
+            const staffRole = interaction.guild.roles.cache.find(
+                (role) => role.name === config.roleNames.staff
             );
-
-            // لو مش موجودة، أنشئها تحت القديمة مباشرة
-            if (!monthlyCategory) {
-                monthlyCategory = await interaction.guild.channels.create({
-                    name: `${baseCategoryName} [${month}-${year}]`,
-                    type: ChannelType.GuildCategory,
-                    position: completedCategory.position + 1, // ⬅️ تجعلها تحت القديمة مباشرة
+            if (
+                !staffRole ||
+                !interaction.member.roles.cache.has(staffRole.id)
+            ) {
+                await interaction.reply({
+                    content:
+                        "❌ You do not have permission to complete orders.",
+                    ephemeral: true,
                 });
-                console.log(
-                    `✅ Created new monthly category: ${monthlyCategory.name}`
-                );
+                return;
             }
 
-            completedCategory = monthlyCategory;
+            try {
+                // 🧾 استرجاع الطلب من قاعدة البيانات
+                const order = await getOrder(orderId);
+                if (!order) {
+                    await interaction.reply({
+                        content: "❌ Order not found.",
+                        ephemeral: true,
+                    });
+                    return;
+                }
+
+                // 🧾 تحديث حالة الطلب إلى مكتمل
+                await updateOrder(orderId, {
+                    status: "completed",
+                    completed_at: new Date().toISOString(),
+                });
+
+                // 🧩 البحث عن أو إنشاء كاتيجوري الأوردرات المكتملة
+                const baseCategoryName =
+                    config.categories.completedOrders || "✅ Completed Orders";
+                const now = new Date();
+                const month = now.toLocaleString("en-US", { month: "short" }); // Oct
+                const year = now.getFullYear();
+
+                // ابحث عن الكاتيجوري الأساسية
+                let completedCategory = interaction.guild.channels.cache.find(
+                    (c) =>
+                        c.type === ChannelType.GuildCategory &&
+                        c.name === baseCategoryName
+                );
+
+                // لو مش موجودة، أنشئها
+                if (!completedCategory) {
+                    completedCategory = await interaction.guild.channels.create(
+                        {
+                            name: baseCategoryName,
+                            type: ChannelType.GuildCategory,
+                        }
+                    );
+                    console.log(
+                        `✅ Created base category: ${baseCategoryName}`
+                    );
+                }
+
+                // ✅ فحص القنوات فعليًا داخل الكاتيجوري (بديل children.cache)
+                const childChannels = interaction.guild.channels.cache.filter(
+                    (ch) => ch.parentId === completedCategory.id
+                );
+                console.log(
+                    `🧩 Found ${childChannels.size} channels in ${completedCategory.name}`
+                );
+
+                // ✅ تحقق من الحد الأقصى (50 قناة في الكاتيجوري)
+                if (childChannels.size >= 50) {
+                    // شوف لو في كاتيجوري شهرية موجودة
+                    let monthlyCategory = interaction.guild.channels.cache.find(
+                        (c) =>
+                            c.type === ChannelType.GuildCategory &&
+                            c.name === `${baseCategoryName} [${month}-${year}]`
+                    );
+
+                    // لو مش موجودة، أنشئها تحت القديمة مباشرة
+                    if (!monthlyCategory) {
+                        monthlyCategory =
+                            await interaction.guild.channels.create({
+                                name: `${baseCategoryName} [${month}-${year}]`,
+                                type: ChannelType.GuildCategory,
+                                position: completedCategory.position + 1, // ⬅️ تجعلها تحت القديمة مباشرة
+                            });
+                        console.log(
+                            `✅ Created new monthly category: ${monthlyCategory.name}`
+                        );
+                    }
+
+                    completedCategory = monthlyCategory;
+                }
+
+                // 🚚 نقل القناة إلى الكاتيجوري المحددة
+                await interaction.channel.setParent(completedCategory);
+                console.log(
+                    `📁 Order ${orderId} moved to ${completedCategory.name}`
+                );
+
+                // 💬 رسالة التأكيد في القناة
+                await interaction.reply({
+                    content: `✅ Order ${orderId} has been marked as completed by ${interaction.user}. Customer access will be revoked in 4 hours.`,
+                });
+
+                // ⏰ إزالة صلاحية المستخدم بعد 4 ساعات + إرسال رسالة مراجعة
+                setTimeout(async () => {
+                    try {
+                        const user = await interaction.client.users.fetch(
+                            order.user_id
+                        );
+
+                        // حذف صلاحية المستخدم من القناة
+                        await interaction.channel.permissionOverwrites.delete(
+                            user
+                        );
+
+                        // البحث عن قناة المراجعات
+                        const reviewsChannel =
+                            interaction.guild.channels.cache.find(
+                                (channel) =>
+                                    channel.name === config.channelNames.reviews
+                            );
+
+                        if (reviewsChannel) {
+                            const reviewButton =
+                                new ActionRowBuilder().addComponents(
+                                    new ButtonBuilder()
+                                        .setLabel("Leave a Review")
+                                        .setStyle(ButtonStyle.Link)
+                                        .setURL(
+                                            `https://discord.com/channels/${interaction.guild.id}/${reviewsChannel.id}`
+                                        )
+                                        .setEmoji("⭐")
+                                );
+
+                            await user
+                                .send({
+                                    content: `✅ Your order ${orderId} has been completed!\nWe'd love to hear your feedback.\nPlease leave a review in the ${reviewsChannel.name} channel:`,
+                                    components: [reviewButton],
+                                })
+                                .catch((error) => {
+                                    console.log(
+                                        `⚠️ Could not send review message to ${user.tag}: ${error.message}`
+                                    );
+                                });
+                        } else {
+                            console.log(
+                                "⚠️ Reviews channel not found."
+                            );
+                        }
+                    } catch (error) {
+                        console.error(
+                            "Error in completion cleanup:",
+                            error
+                        );
+                    }
+                }, config.completionDelay || 4 * 60 * 60 * 1000); // 4 ساعات افتراضيًا
+            } catch (error) {
+                console.error(
+                    "Error completing order:",
+                    error
+                );
+                await interaction.reply({
+                    content: "❌ Failed to complete the order.",
+                    ephemeral: true,
+                });
+            }
         }
 
         // 🚚 نقل القناة إلى الكاتيجوري المحددة
         await interaction.channel.setParent(completedCategory);
-        console.log(
-            `📁 Order ${orderId} moved to ${completedCategory.name}`
-        );
+        console.log(`📁 Order ${orderId} moved to ${completedCategory.name} - ticketHandler.js:706`);
 
         // 💬 رسالة التأكيد في القناة
         await interaction.reply({
@@ -625,19 +747,14 @@ async function handleStaffComplete(interaction, orderId) {
                             );
                         });
                 } else {
-                    console.log(
-                        "⚠️ Reviews channel not found."
-                    );
+                    console.log("⚠️ Reviews channel not found. - ticketHandler.js:750");
                 }
             } catch (error) {
-                console.error(
-                    "Error in completion cleanup:",
-                    error
-                );
+                console.error("Error in completion cleanup: - ticketHandler.js:753", error);
             }
         }, config.completionDelay || 4 * 60 * 60 * 1000); // 4 ساعات افتراضيًا
     } catch (error) {
-        console.error("Error completing order: - ticketHandler.js:640", error);
+        console.error("Error completing order: - ticketHandler.js:757", error);
         await interaction.reply({
             content: "❌ Failed to complete the order.",
             ephemeral: true,
@@ -672,10 +789,7 @@ async function handlePaymentMethodSelection(interaction, orderId) {
             ephemeral: false,
         });
     } catch (error) {
-        console.error(
-            "Error handling payment method selection:",
-            error
-        );
+        console.error("Error handling payment method selection: - ticketHandler.js:792", error);
         await interaction.reply({
             content:
                 "❌ Failed to process payment method selection. Please try again.",
