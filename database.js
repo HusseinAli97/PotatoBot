@@ -12,9 +12,10 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = path.join(dataDir, "orders.db");
 let db;
 
+// 🚀 تهيئة قاعدة البيانات
 function initDatabase() {
     return new Promise((resolve, reject) => {
-        db = new sqlite3.Database(dbPath, (err) => {
+        db = new sqlite3.Database(dbPath, async (err) => {
             if (err) {
                 console.error(
                     "❌ Error opening database:",
@@ -58,9 +59,15 @@ function initDatabase() {
                         );
                         reject(err);
                     } else {
-                        console.log("🗂️ Orders table ready - database.js:61");
+                        console.log("🗂️ Orders table ready - database.js:62");
+
                         await addColumnIfNotExists("hours_amount", "TEXT");
-                        await backupDatabase(); // ← نسخ احتياطي عند كل تشغيل
+
+                        // 🧩 عمل نسخة احتياطية فقط لو الملف موجود مسبقًا
+                        if (fs.existsSync(dbPath)) {
+                            await backupDatabase();
+                        }
+
                         resolve();
                     }
                 }
@@ -221,9 +228,14 @@ function getCompletedOrders() {
     });
 }
 
-// 💾 دالة النسخ الاحتياطي التلقائي
+// 💾 نسخ احتياطي آمن للقاعدة
 async function backupDatabase() {
     try {
+        if (!fs.existsSync(dbPath)) {
+            console.log("⚠️ No database found to back up. - database.js:235");
+            return;
+        }
+
         const timestamp = new Date()
             .toISOString()
             .replace(/[:.]/g, "-")
@@ -232,7 +244,7 @@ async function backupDatabase() {
         const backupPath = path.join(dataDir, `orders_backup_${timestamp}.db`);
 
         await fs.promises.copyFile(dbPath, backupPath);
-        console.log(`🧩 Backup created: ${backupPath} - database.js:235`);
+        console.log(`🧩 Backup created: ${backupPath} - database.js:247`);
     } catch (error) {
         console.error(
             "⚠️ Failed to create database backup:",

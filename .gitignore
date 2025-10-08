@@ -7,7 +7,9 @@ node_modules/
 # SQLite database files and backups
 data/
 *.db
-
+/data/
+/data/*
+!data/.keep
 # Logs
 logs/
 *.log
