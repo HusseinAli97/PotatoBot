@@ -180,7 +180,7 @@ async function handleOrderInteraction(interaction) {
                 content: `✅ Your ticket has been created: ${ticketChannel}`,
             });
         } catch (error) {
-            console.error("Error creating ticket:", error);
+            console.error("Error creating ticket: - orderHandler.js:183", error);
             if (interaction.replied || interaction.deferred) {
                 await interaction.editReply({
                     content:

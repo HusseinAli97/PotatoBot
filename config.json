@@ -1,0 +1,13 @@
+{
+    "token": "",
+    "roleNames": {
+        "staff": "Staff"
+    },
+    "categories": {
+        "completedOrders": "✅ Completed Orders"
+    },
+    "channelNames": {
+        "reviews": "✅┊𝐑𝐞𝐯𝐢𝐞𝐰𝐬"
+    },
+    "completionDelay": 14400000
+}
