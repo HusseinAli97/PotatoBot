@@ -1,4 +1,6 @@
 require("./server.js");
+require("dotenv").config();
+
 const {
     Client,
     GatewayIntentBits,
@@ -46,7 +48,7 @@ for (const file of eventFiles) {
 }
 
 client.once("ready", async () => {
-    console.log(`${client.user.tag} is online!`);
+    console.log(`${client.user.tag} is online! - index.js:51`);
 
     // Initialize database
     await initDatabase();
@@ -60,11 +62,15 @@ client.once("ready", async () => {
     const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
     try {
-        console.log("Started refreshing application (/) commands.");
+        console.log(
+            "Started refreshing application (/) commands."
+        );
         await rest.put(Routes.applicationCommands(client.user.id), {
             body: commands,
         });
-        console.log("Successfully reloaded application (/) commands.");
+        console.log(
+            "Successfully reloaded application (/) commands."
+        );
     } catch (error) {
         console.error(error);
     }

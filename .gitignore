@@ -1,0 +1,21 @@
+# Node dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# SQLite database files and backups
+data/
+*.db
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build or temp folders (لو وجدت)
+dist/
+tmp/
