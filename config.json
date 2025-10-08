@@ -1,13 +1,75 @@
 {
-    "token": "",
     "roleNames": {
-        "staff": "Staff"
-    },
-    "categories": {
-        "completedOrders": "✅ Completed Orders"
+        "vsc": "VsC",
+        "staff": "Staff",
+        "ceo": "CEO"
     },
     "channelNames": {
-        "reviews": "✅┊𝐑𝐞𝐯𝐢𝐞𝐰𝐬"
+        "orderHere": "🛒┊order-here",
+        "ordersDetails": "orders-details",
+        "ordersDetailsAlt": "order-details",
+        "reviews": "reviews"
     },
+    "categories": {
+        "paragonLeveling": "Paragon Leveling",
+        "powerleveling": "Powerleveling",
+        "gearing": "Gearing",
+        "bossKills": "Boss Kills",
+        "bossMats": "Boss Mats",
+        "customOrder": "Custom Order",
+        "completedOrders": "Completed Orders"
+    },
+    "services": [
+        {
+            "label": "Paragon Leveling",
+            "value": "paragon_leveling",
+            "emoji": "⚡"
+        },
+        {
+            "label": "Powerleveling",
+            "value": "powerleveling",
+            "emoji": "🚀"
+        },
+        {
+            "label": "Gearing",
+            "value": "gearing",
+            "emoji": "⚔️"
+        },
+        {
+            "label": "Boss Kills",
+            "value": "boss_kills",
+            "emoji": "👹"
+        },
+        {
+            "label": "Boss Mats",
+            "value": "boss_mats",
+            "emoji": "💎"
+        },
+        {
+            "label": "Custom Order",
+            "value": "custom_order",
+            "emoji": "🛠️"
+        }
+    ],
+    "paymentMethods": [
+        {
+            "label": "PayPal",
+            "value": "paypal",
+            "emoji": "💳",
+            "info": "PayPal:\npaypal.me/PotatolordIvI\nor potatolordivi@gmail.com"
+        },
+        {
+            "label": "Crypto",
+            "value": "crypto",
+            "emoji": "🪙",
+            "info": "Crypto:\nBinanceID => 446978223\nUstd-TRC20(TRX) => TB2pv2ezpFZuqRux91xKZg8ivUhNff11yd"
+        },
+        {
+            "label": "Western Union",
+            "value": "western_union",
+            "emoji": "💰",
+            "info": "Western Union:\nFirst Name: Hussein\nSur Name: Mohamed Ali Ahmed Ramadan\nPhone number: +201012994986\nEmail: potatolordivi@gmail.com"
+        }
+    ],
     "completionDelay": 14400000
 }
