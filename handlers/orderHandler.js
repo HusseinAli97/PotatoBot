@@ -6,19 +6,21 @@ const {
     ButtonBuilder,
     ButtonStyle,
 } = require("discord.js");
-const { createOrder } = require("../database");
+const { createOrder, updateOrder } = require("../database");
 const { createTicketChannelPermissions } = require("../utils/permissions");
 const { createTicketEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 
 async function handleOrderInteraction(interaction) {
+
+    // 🎫 Create Order Button
     if (interaction.isButton() && interaction.customId === "create_order") {
         const selectMenu = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
                 .setCustomId("service_select")
                 .setPlaceholder("Select a service type...")
                 .addOptions(
-                    config.services.map((service) => ({
+                    config.services.map(service => ({
                         label: service.label,
                         value: service.value,
                         emoji: service.emoji,
@@ -26,81 +28,38 @@ async function handleOrderInteraction(interaction) {
                 )
         );
 
-        const reply = await interaction.reply({
+        return interaction.reply({
             content: "Please select the type of service you need:",
             components: [selectMenu],
-            ephemeral: true,
+            flags: 64, // Ephemeral
         });
+    }
 
-        setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
-    } else if (
-        interaction.isStringSelectMenu() &&
-        interaction.customId === "service_select"
-    ) {
+    // 📌 Service Select Menu
+    if (interaction.isStringSelectMenu() && interaction.customId === "service_select") {
+        await interaction.deferReply({ flags: 64 });
+
         const selectedService = interaction.values[0];
-        const serviceConfig = config.services.find(
-            (s) => s.value === selectedService
-        );
+        const serviceConfig = config.services.find(s => s.value === selectedService);
 
         if (!serviceConfig) {
-            const reply = await interaction.reply({
+            return interaction.editReply({
                 content: "❌ Invalid service selection.",
-                ephemeral: true,
             });
-            setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
-            return;
         }
 
         try {
-            const reply = await interaction.reply({
-                content: "🎫 Creating your ticket, please wait...",
-                ephemeral: true,
-            });
-            setTimeout(() => interaction.deleteReply().catch(() => {}), 30000);
-
             const categoryName = getCategoryName(selectedService);
+
             let category = interaction.guild.channels.cache.find(
-                (c) =>
-                    c.type === ChannelType.GuildCategory &&
-                    c.name === categoryName
+                c => c.type === ChannelType.GuildCategory && c.name === categoryName
             );
 
             if (!category) {
-                try {
-                    category = await interaction.guild.channels.create({
-                        name: categoryName,
-                        type: ChannelType.GuildCategory,
-                    });
-                } catch (error) {
-                    const botMember = interaction.guild.members.me;
-                    category = interaction.guild.channels.cache.find(
-                        (channel) => {
-                            if (channel.type !== ChannelType.GuildCategory)
-                                return false;
-                            const permissions =
-                                channel.permissionsFor(botMember);
-                            return (
-                                permissions &&
-                                permissions.has(
-                                    PermissionFlagsBits.ManageChannels
-                                )
-                            );
-                        }
-                    );
-                }
-            }
-
-            if (!category) {
-                const follow = await interaction.followUp({
-                    content:
-                        "❌ Unable to create ticket category. Please contact staff to check bot permissions.",
-                    ephemeral: true,
+                category = await interaction.guild.channels.create({
+                    name: categoryName,
+                    type: ChannelType.GuildCategory,
                 });
-                setTimeout(
-                    () => interaction.deleteReply().catch(() => {}),
-                    30000
-                );
-                return;
             }
 
             const orderId = await createOrder(
@@ -108,17 +67,15 @@ async function handleOrderInteraction(interaction) {
                 selectedService,
                 null
             );
-            const channelName = `${selectedService.replace("_", "-")}-${
-                orderId.split("-")[1]
-            }`;
+
+            const channelName = `${selectedService.replace("_", "-")}-${orderId.split("-")[1]}`;
             const permissionOverwrites = createTicketChannelPermissions(
                 interaction.guild,
                 interaction.user
             );
 
-            const botMember = interaction.guild.members.me;
             permissionOverwrites.push({
-                id: botMember.id,
+                id: interaction.guild.members.me.id,
                 allow: [
                     PermissionFlagsBits.ViewChannel,
                     PermissionFlagsBits.SendMessages,
@@ -128,35 +85,21 @@ async function handleOrderInteraction(interaction) {
                 ],
             });
 
-            const categoryPermissions = category.permissionsFor(botMember);
-            if (!categoryPermissions?.has(PermissionFlagsBits.ManageChannels)) {
-                const follow = await interaction.followUp({
-                    content: `❌ Bot lacks permissions to create channels in the "${category.name}" category.`,
-                    ephemeral: true,
-                });
-                setTimeout(
-                    () => interaction.deleteReply().catch(() => {}),
-                    30000
-                );
-                return;
-            }
-
             const ticketChannel = await interaction.guild.channels.create({
                 name: channelName,
                 type: ChannelType.GuildText,
                 parent: category,
-                permissionOverwrites: permissionOverwrites,
+                permissionOverwrites,
             });
 
-            await require("../database").updateOrder(orderId, {
-                channel_id: ticketChannel.id,
-            });
+            await updateOrder(orderId, { channel_id: ticketChannel.id });
 
             const embed = createTicketEmbed(
                 serviceConfig.label,
                 orderId,
                 interaction.user
             );
+
             const buttons = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setCustomId(`ticket_confirm_${orderId}`)
@@ -171,32 +114,20 @@ async function handleOrderInteraction(interaction) {
             );
 
             await ticketChannel.send({
-                content: `<@${interaction.user.id}>, your ${serviceConfig.label} ticket has been created!`,
+                content: `<@${interaction.user.id}> your ticket has been created`,
                 embeds: [embed],
                 components: [buttons],
             });
 
             await interaction.editReply({
-                content: `✅ Your ticket has been created: ${ticketChannel}`,
+                content: `✅ Ticket created successfully: ${ticketChannel}`,
             });
+
         } catch (error) {
-            console.error("Error creating ticket: - orderHandler.js:183", error);
-            if (interaction.replied || interaction.deferred) {
-                await interaction.editReply({
-                    content:
-                        "❌ Failed to create your ticket. Please try again or contact staff.",
-                });
-            } else {
-                const reply = await interaction.reply({
-                    content:
-                        "❌ Failed to create your ticket. Please try again or contact staff.",
-                    ephemeral: true,
-                });
-                setTimeout(
-                    () => interaction.deleteReply().catch(() => {}),
-                    30000
-                );
-            }
+            console.error("Order creation error:", error);
+            await interaction.editReply({
+                content: "❌ Failed to create ticket. Please contact staff.",
+            });
         }
     }
 }
@@ -214,6 +145,4 @@ function getCategoryName(serviceValue) {
     return categoryMap[serviceValue] || config.categories.customOrder;
 }
 
-module.exports = {
-    handleOrderInteraction,
-};
+module.exports = { handleOrderInteraction };
