@@ -26,7 +26,7 @@ async function handleTicketInteraction(interaction) {
             return handleTicketConfirm(interaction, orderId);
         }
 
-        // باقي الأزرار عادي
+        // باقي الأزرار
         await interaction.deferReply({ ephemeral: true });
 
         if (type === "close")
@@ -121,18 +121,36 @@ async function handleTicketConfirm(interaction, orderId) {
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
-    modal.addComponents(
+    const components = [
         new ActionRowBuilder().addComponents(battleTagInput),
         new ActionRowBuilder().addComponents(pilotInput),
         new ActionRowBuilder().addComponents(expressInput),
-    );
+    ];
+
+    // ✅ Custom Order فقط
+    if (order.service_type === "custom_order") {
+        const customDetailsInput = new TextInputBuilder()
+            .setCustomId("custom_order_details")
+            .setLabel("Describe your custom order")
+            .setStyle(TextInputStyle.Paragraph)
+            .setPlaceholder(
+                "Please describe exactly what you want...",
+            )
+            .setRequired(true);
+
+        components.push(
+            new ActionRowBuilder().addComponents(customDetailsInput),
+        );
+    }
+
+    modal.addComponents(...components);
 
     // ✅ أول وأوحد رد
     await interaction.showModal(modal);
 }
 
 /* =========================
-   ORDER FORM
+   ORDER FORM SUBMIT
 ========================= */
 async function handleOrderForm(interaction, orderId) {
     const order = await getOrder(orderId);
@@ -151,6 +169,14 @@ async function handleOrderForm(interaction, orderId) {
             interaction.fields.getTextInputValue("express_type"),
         status: "confirmed",
     };
+
+    // ✅ Custom Order Details
+    if (order.service_type === "custom_order") {
+        updateData.custom_order_details =
+            interaction.fields.getTextInputValue(
+                "custom_order_details",
+            );
+    }
 
     await updateOrder(orderId, updateData);
 
