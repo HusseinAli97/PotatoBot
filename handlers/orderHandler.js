@@ -6,41 +6,55 @@ const {
     ButtonBuilder,
     ButtonStyle,
 } = require("discord.js");
+
 const { createOrder, updateOrder } = require("../database");
-const { createTicketChannelPermissions } = require("../utils/permissions");
+const {
+    createTicketChannelPermissions,
+} = require("../utils/permissions");
 const { createTicketEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 
 async function handleOrderInteraction(interaction) {
-
-    // 🎫 Create Order Button
-    if (interaction.isButton() && interaction.customId === "create_order") {
+    // =========================
+    // 🎫 CREATE ORDER BUTTON
+    // =========================
+    if (
+        interaction.isButton() &&
+        interaction.customId === "create_order"
+    ) {
         const selectMenu = new ActionRowBuilder().addComponents(
             new StringSelectMenuBuilder()
                 .setCustomId("service_select")
                 .setPlaceholder("Select a service type...")
                 .addOptions(
-                    config.services.map(service => ({
+                    config.services.map((service) => ({
                         label: service.label,
                         value: service.value,
                         emoji: service.emoji,
-                    }))
-                )
+                    })),
+                ),
         );
 
         return interaction.reply({
             content: "Please select the type of service you need:",
             components: [selectMenu],
-            flags: 64, // Ephemeral
+            ephemeral: true,
         });
     }
 
-    // 📌 Service Select Menu
-    if (interaction.isStringSelectMenu() && interaction.customId === "service_select") {
-        await interaction.deferReply({ flags: 64 });
+    // =========================
+    // 📌 SERVICE SELECT MENU
+    // =========================
+    if (
+        interaction.isStringSelectMenu() &&
+        interaction.customId === "service_select"
+    ) {
+        await interaction.deferReply({ ephemeral: true });
 
         const selectedService = interaction.values[0];
-        const serviceConfig = config.services.find(s => s.value === selectedService);
+        const serviceConfig = config.services.find(
+            (s) => s.value === selectedService,
+        );
 
         if (!serviceConfig) {
             return interaction.editReply({
@@ -52,7 +66,9 @@ async function handleOrderInteraction(interaction) {
             const categoryName = getCategoryName(selectedService);
 
             let category = interaction.guild.channels.cache.find(
-                c => c.type === ChannelType.GuildCategory && c.name === categoryName
+                (c) =>
+                    c.type === ChannelType.GuildCategory &&
+                    c.name === categoryName,
             );
 
             if (!category) {
@@ -65,14 +81,16 @@ async function handleOrderInteraction(interaction) {
             const orderId = await createOrder(
                 interaction.user.id,
                 selectedService,
-                null
+                null,
             );
 
             const channelName = `${selectedService.replace("_", "-")}-${orderId.split("-")[1]}`;
-            const permissionOverwrites = createTicketChannelPermissions(
-                interaction.guild,
-                interaction.user
-            );
+
+            const permissionOverwrites =
+                createTicketChannelPermissions(
+                    interaction.guild,
+                    interaction.user,
+                );
 
             permissionOverwrites.push({
                 id: interaction.guild.members.me.id,
@@ -85,19 +103,22 @@ async function handleOrderInteraction(interaction) {
                 ],
             });
 
-            const ticketChannel = await interaction.guild.channels.create({
-                name: channelName,
-                type: ChannelType.GuildText,
-                parent: category,
-                permissionOverwrites,
-            });
+            const ticketChannel =
+                await interaction.guild.channels.create({
+                    name: channelName,
+                    type: ChannelType.GuildText,
+                    parent: category,
+                    permissionOverwrites,
+                });
 
-            await updateOrder(orderId, { channel_id: ticketChannel.id });
+            await updateOrder(orderId, {
+                channel_id: ticketChannel.id,
+            });
 
             const embed = createTicketEmbed(
                 serviceConfig.label,
                 orderId,
-                interaction.user
+                interaction.user,
             );
 
             const buttons = new ActionRowBuilder().addComponents(
@@ -110,7 +131,7 @@ async function handleOrderInteraction(interaction) {
                     .setCustomId(`ticket_close_${orderId}`)
                     .setLabel("Close")
                     .setStyle(ButtonStyle.Danger)
-                    .setEmoji("❌")
+                    .setEmoji("❌"),
             );
 
             await ticketChannel.send({
@@ -122,16 +143,20 @@ async function handleOrderInteraction(interaction) {
             await interaction.editReply({
                 content: `✅ Ticket created successfully: ${ticketChannel}`,
             });
-
         } catch (error) {
             console.error("Order creation error:", error);
+
             await interaction.editReply({
-                content: "❌ Failed to create ticket. Please contact staff.",
+                content:
+                    "❌ Failed to create ticket. Please contact staff.",
             });
         }
     }
 }
 
+// =========================
+// CATEGORY HELPER
+// =========================
 function getCategoryName(serviceValue) {
     const categoryMap = {
         paragon_leveling: config.categories.paragonLeveling,
@@ -142,6 +167,7 @@ function getCategoryName(serviceValue) {
         custom_order: config.categories.customOrder,
         hourly_diving: config.categories.hourlyDiving,
     };
+
     return categoryMap[serviceValue] || config.categories.customOrder;
 }
 

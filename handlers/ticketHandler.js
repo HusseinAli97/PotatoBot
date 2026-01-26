@@ -5,7 +5,6 @@ const {
     ModalBuilder,
     TextInputBuilder,
     TextInputStyle,
-    ChannelType,
     StringSelectMenuBuilder,
 } = require("discord.js");
 
@@ -14,29 +13,39 @@ const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 
 async function handleTicketInteraction(interaction) {
-
     // =========================
     // BUTTONS
     // =========================
     if (interaction.isButton()) {
-        const [action, type, orderId] = interaction.customId.split("_");
+        const [action, type, orderId] =
+            interaction.customId.split("_");
         if (action !== "ticket") return;
 
-        // ❗ لازم defer هنا
-        await interaction.deferReply({ flags: 64 });
+        // ✅ CONFIRM → MODAL ONLY (NO DEFER)
+        if (type === "confirm") {
+            return handleTicketConfirm(interaction, orderId);
+        }
 
-        if (type === "close") return handleTicketClose(interaction, orderId);
-        if (type === "confirm") return handleTicketConfirm(interaction, orderId);
-        if (type === "cancel") return handleStaffCancel(interaction, orderId);
-        if (type === "complete") return handleStaffComplete(interaction, orderId);
+        // باقي الأزرار عادي
+        await interaction.deferReply({ ephemeral: true });
+
+        if (type === "close")
+            return handleTicketClose(interaction, orderId);
+        if (type === "cancel")
+            return handleStaffCancel(interaction, orderId);
+        if (type === "complete")
+            return handleStaffComplete(interaction, orderId);
     }
 
     // =========================
     // MODAL SUBMIT
     // =========================
     if (interaction.isModalSubmit()) {
-        const orderId = interaction.customId.replace("order_form_", "");
-        await interaction.deferReply({ flags: 64 });
+        const orderId = interaction.customId.replace(
+            "order_form_",
+            "",
+        );
+        await interaction.deferReply({ ephemeral: true });
         return handleOrderForm(interaction, orderId);
     }
 
@@ -47,8 +56,11 @@ async function handleTicketInteraction(interaction) {
         interaction.isStringSelectMenu() &&
         interaction.customId.startsWith("payment_method_")
     ) {
-        const orderId = interaction.customId.replace("payment_method_", "");
-        await interaction.deferReply({ flags: 64 });
+        const orderId = interaction.customId.replace(
+            "payment_method_",
+            "",
+        );
+        await interaction.deferReply({ ephemeral: true });
         return handlePaymentMethodSelection(interaction, orderId);
     }
 }
@@ -59,7 +71,9 @@ async function handleTicketInteraction(interaction) {
 async function handleTicketClose(interaction, orderId) {
     const order = await getOrder(orderId);
     if (!order) {
-        return interaction.editReply({ content: "❌ Order not found." });
+        return interaction.editReply({
+            content: "❌ Order not found.",
+        });
     }
 
     await deleteOrder(orderId);
@@ -79,7 +93,10 @@ async function handleTicketClose(interaction, orderId) {
 async function handleTicketConfirm(interaction, orderId) {
     const order = await getOrder(orderId);
     if (!order) {
-        return interaction.editReply({ content: "❌ Order not found." });
+        return interaction.reply({
+            content: "❌ Order not found.",
+            ephemeral: true,
+        });
     }
 
     const modal = new ModalBuilder()
@@ -107,10 +124,10 @@ async function handleTicketConfirm(interaction, orderId) {
     modal.addComponents(
         new ActionRowBuilder().addComponents(battleTagInput),
         new ActionRowBuilder().addComponents(pilotInput),
-        new ActionRowBuilder().addComponents(expressInput)
+        new ActionRowBuilder().addComponents(expressInput),
     );
 
-    // ❗ modal فقط بدون reply
+    // ✅ أول وأوحد رد
     await interaction.showModal(modal);
 }
 
@@ -120,20 +137,27 @@ async function handleTicketConfirm(interaction, orderId) {
 async function handleOrderForm(interaction, orderId) {
     const order = await getOrder(orderId);
     if (!order) {
-        return interaction.editReply({ content: "❌ Order not found." });
+        return interaction.editReply({
+            content: "❌ Order not found.",
+        });
     }
 
     const updateData = {
-        battle_tag: interaction.fields.getTextInputValue("battle_tag"),
-        pilot_type: interaction.fields.getTextInputValue("pilot_type"),
-        express_type: interaction.fields.getTextInputValue("express_type"),
+        battle_tag:
+            interaction.fields.getTextInputValue("battle_tag"),
+        pilot_type:
+            interaction.fields.getTextInputValue("pilot_type"),
+        express_type:
+            interaction.fields.getTextInputValue("express_type"),
         status: "confirmed",
     };
 
     await updateOrder(orderId, updateData);
 
     const updatedOrder = await getOrder(orderId);
-    const user = await interaction.client.users.fetch(updatedOrder.user_id);
+    const user = await interaction.client.users.fetch(
+        updatedOrder.user_id,
+    );
     const embed = createOrderDetailsEmbed(updatedOrder, user);
 
     await interaction.channel.send({
@@ -151,10 +175,13 @@ async function handleOrderForm(interaction, orderId) {
 ========================= */
 async function handleStaffCancel(interaction, orderId) {
     const staffRole = interaction.guild.roles.cache.find(
-        r => r.name === config.roleNames.staff
+        (r) => r.name === config.roleNames.staff,
     );
 
-    if (!staffRole || !interaction.member.roles.cache.has(staffRole.id)) {
+    if (
+        !staffRole ||
+        !interaction.member.roles.cache.has(staffRole.id)
+    ) {
         return interaction.editReply({
             content: "❌ You do not have permission.",
         });
@@ -163,7 +190,8 @@ async function handleStaffCancel(interaction, orderId) {
     await updateOrder(orderId, { status: "cancelled" });
 
     await interaction.editReply({
-        content: "🚫 Order cancelled. Channel will be deleted in 5 seconds.",
+        content:
+            "🚫 Order cancelled. Channel will be deleted in 5 seconds.",
     });
 
     setTimeout(() => {
@@ -176,10 +204,13 @@ async function handleStaffCancel(interaction, orderId) {
 ========================= */
 async function handleStaffComplete(interaction, orderId) {
     const staffRole = interaction.guild.roles.cache.find(
-        r => r.name === config.roleNames.staff
+        (r) => r.name === config.roleNames.staff,
     );
 
-    if (!staffRole || !interaction.member.roles.cache.has(staffRole.id)) {
+    if (
+        !staffRole ||
+        !interaction.member.roles.cache.has(staffRole.id)
+    ) {
         return interaction.editReply({
             content: "❌ You do not have permission.",
         });
