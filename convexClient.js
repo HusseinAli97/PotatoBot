@@ -1,5 +1,5 @@
-import { ConvexHttpClient } from "convex/browser";
+const { ConvexHttpClient } = require("convex/browser");
 
 const convex = new ConvexHttpClient(process.env.CONVEX_URL);
 
-export default convex;
+module.exports = convex;
