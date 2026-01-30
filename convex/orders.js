@@ -61,3 +61,21 @@ export const updateOrder = mutation({
         });
     },
 });
+
+export const deleteOrder = mutation({
+    args: {
+        orderId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const order = await ctx.db
+            .query("orders")
+            .withIndex("by_orderId", (q) =>
+                q.eq("orderId", args.orderId),
+            )
+            .first();
+
+        if (!order) return;
+
+        await ctx.db.delete(order._id);
+    },
+});
