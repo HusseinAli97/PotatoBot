@@ -187,7 +187,7 @@ async function handleOrderForm(interaction, orderId) {
     // 2️⃣ نجيب الأوردر بعد التحديث
     const updatedOrder = await getOrder(orderId);
     const user = await interaction.client.users.fetch(
-        updatedOrder.user_id,
+        updatedOrder.userId || updatedOrder.user_id,
     );
 
     // 3️⃣ نعمل Embed واحد نستخدمه في كل مكان
