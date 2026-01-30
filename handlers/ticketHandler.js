@@ -12,7 +12,7 @@ const {
     getOrder,
     updateOrder,
     deleteOrder,
-} = require("../data/orderRepository");
+} = require("../services/orderRepository");
 const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 
