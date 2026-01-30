@@ -170,7 +170,6 @@ async function handleOrderForm(interaction, orderId) {
         status: "confirmed",
     };
 
-    // ✅ Custom Order Details
     if (order.service_type === "custom_order") {
         updateData.custom_order_details =
             interaction.fields.getTextInputValue(
@@ -178,46 +177,70 @@ async function handleOrderForm(interaction, orderId) {
             );
     }
 
+    // 1️⃣ تحديث الأوردر
     await updateOrder(orderId, updateData);
 
+    // 2️⃣ نجيب الأوردر بعد التحديث
     const updatedOrder = await getOrder(orderId);
     const user = await interaction.client.users.fetch(
         updatedOrder.user_id,
     );
+
+    // 3️⃣ نعمل Embed واحد نستخدمه في كل مكان
     const embed = createOrderDetailsEmbed(updatedOrder, user);
 
+    // =========================
+    // 📢 STAFF NOTIFICATION
+    // =========================
+    const orderDetailsChannel = interaction.guild.channels.cache.find(
+        (ch) =>
+            ch.name === config.channelNames.ordersDetails ||
+            ch.name === config.channelNames.ordersDetailsAlt,
+    );
+
+    const staffRole = interaction.guild.roles.cache.find(
+        (r) => r.name === config.roleNames.staff,
+    );
+
+    if (orderDetailsChannel) {
+        await orderDetailsChannel.send({
+            content: staffRole
+                ? `🚨 **New order confirmed!** <@&${staffRole.id}>`
+                : "🚨 **New order confirmed!**",
+            embeds: [embed],
+        });
+    }
+
+    // =========================
+    // 👤 MESSAGE TO CLIENT
+    // =========================
     await interaction.channel.send({
         content: "📦 Order confirmed!",
         embeds: [embed],
     });
 
+    // =========================
+    // 💳 PAYMENT METHOD SELECT
+    // =========================
     const paymentSelect = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
             .setCustomId(`payment_method_${orderId}`)
             .setPlaceholder("Select your payment method...")
-            .addOptions([
-                {
-                    label: "PayPal",
-                    value: "paypal",
-                    emoji: "💳",
-                },
-                {
-                    label: "Crypto",
-                    value: "crypto",
-                    emoji: "🪙",
-                },
-                {
-                    label: "Western Union",
-                    value: "western_union",
-                    emoji: "💵",
-                },
-            ]),
+            .addOptions(
+                config.paymentMethods.map((pm) => ({
+                    label: pm.label,
+                    value: pm.value,
+                    emoji: pm.emoji,
+                })),
+            ),
     );
 
     await interaction.channel.send({
         content: "✅ Please select your payment method below:",
         components: [paymentSelect],
     });
+
+    // 4️⃣ نقفل الـ modal interaction
     await interaction.editReply({
         content: "✅ Order confirmed successfully.",
     });
