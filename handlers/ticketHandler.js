@@ -191,6 +191,33 @@ async function handleOrderForm(interaction, orderId) {
         embeds: [embed],
     });
 
+    const paymentSelect = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+            .setCustomId(`payment_method_${orderId}`)
+            .setPlaceholder("Select your payment method...")
+            .addOptions([
+                {
+                    label: "PayPal",
+                    value: "paypal",
+                    emoji: "💳",
+                },
+                {
+                    label: "Crypto",
+                    value: "crypto",
+                    emoji: "🪙",
+                },
+                {
+                    label: "Western Union",
+                    value: "western_union",
+                    emoji: "💵",
+                },
+            ]),
+    );
+
+    await interaction.channel.send({
+        content: "✅ Please select your payment method below:",
+        components: [paymentSelect],
+    });
     await interaction.editReply({
         content: "✅ Order confirmed successfully.",
     });
