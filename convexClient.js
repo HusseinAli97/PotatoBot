@@ -11,4 +11,4 @@ if (CONVEX_URL) {
     console.warn("⚠️ CONVEX_URL not set, Convex disabled");
 }
 
-module.exports = { convex };
+module.exports = convex;
