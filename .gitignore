@@ -21,3 +21,5 @@ Thumbs.db
 # Build or temp folders (لو وجدت)
 dist/
 tmp/
+
+.env.local

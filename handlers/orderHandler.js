@@ -7,7 +7,9 @@ const {
     ButtonStyle,
 } = require("discord.js");
 
-const { createOrder, updateOrder } = require("../database");
+const { updateOrder } = require("../database");
+const convex = require("../convexClient");
+const { generateOrderId } = require("../database");
 const {
     createTicketChannelPermissions,
 } = require("../utils/permissions");
@@ -78,11 +80,13 @@ async function handleOrderInteraction(interaction) {
                 });
             }
 
-            const orderId = await createOrder(
-                interaction.user.id,
-                selectedService,
-                null,
-            );
+            const orderId = generateOrderId();
+
+            await convex.mutation("orders:createOrder", {
+                orderId,
+                userId: interaction.user.id,
+                serviceType: selectedService,
+            });
 
             const channelName = `${selectedService.replace("_", "-")}-${orderId.split("-")[1]}`;
 
