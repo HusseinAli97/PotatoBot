@@ -443,3 +443,6 @@ async function handlePaymentMethodSelection(interaction, orderId) {
         });
     }
 }
+module.exports = {
+    handleTicketInteraction,
+};
