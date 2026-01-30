@@ -427,8 +427,10 @@ async function handleStaffComplete(interaction, orderId) {
 async function handlePaymentMethodSelection(interaction, orderId) {
     const paymentMethod = interaction.values[0];
 
-    // 1️⃣ تخزين وسيلة الدفع
-    await updateOrder(orderId, { payment_method: paymentMethod });
+    // 1️⃣ حفظ وسيلة الدفع (Convex → SQLite fallback)
+    await updateOrder(orderId, {
+        payment_method: paymentMethod,
+    });
 
     // 2️⃣ نجيب بيانات الدفع من config
     const paymentData = config.paymentMethods.find(
