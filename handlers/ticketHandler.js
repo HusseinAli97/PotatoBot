@@ -17,20 +17,16 @@ const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 
 async function handleTicketInteraction(interaction) {
-    // =========================
-    // BUTTONS
-    // =========================
     if (interaction.isButton()) {
         const [action, type, orderId] =
             interaction.customId.split("_");
         if (action !== "ticket") return;
 
-        // ✅ CONFIRM → MODAL ONLY (NO DEFER)
+        // Confirm → Modal (no defer)
         if (type === "confirm") {
             return handleTicketConfirm(interaction, orderId);
         }
 
-        // باقي الأزرار
         await interaction.deferReply({ ephemeral: true });
 
         if (type === "close")
@@ -39,11 +35,12 @@ async function handleTicketInteraction(interaction) {
             return handleStaffCancel(interaction, orderId);
         if (type === "complete")
             return handleStaffComplete(interaction, orderId);
+        if (type === "paid")
+            return handleClientPaid(interaction, orderId);
+        if (type === "verify")
+            return handleVerifyPayment(interaction, orderId);
     }
 
-    // =========================
-    // MODAL SUBMIT
-    // =========================
     if (interaction.isModalSubmit()) {
         const orderId = interaction.customId.replace(
             "order_form_",
@@ -53,9 +50,6 @@ async function handleTicketInteraction(interaction) {
         return handleOrderForm(interaction, orderId);
     }
 
-    // =========================
-    // PAYMENT SELECT
-    // =========================
     if (
         interaction.isStringSelectMenu() &&
         interaction.customId.startsWith("payment_method_")
@@ -67,6 +61,83 @@ async function handleTicketInteraction(interaction) {
         await interaction.deferReply({ ephemeral: true });
         return handlePaymentMethodSelection(interaction, orderId);
     }
+}
+
+/* =========================
+ClintPaid
+========================= */
+async function handleClientPaid(interaction, orderId) {
+    // 🔒 اقفل الزر فورًا
+    await interaction.message.edit({ components: [] });
+
+    // 🗂️ حدّث حالة الأوردر
+    await updateOrder(orderId, {
+        status: "payment_submitted",
+    });
+
+    const staffRole = interaction.guild.roles.cache.find(
+        (r) => r.name === config.roleNames.staff,
+    );
+
+    const verifyBtn = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`ticket_verify_${orderId}`)
+            .setLabel("✅ Payment Verified")
+            .setStyle(ButtonStyle.Success),
+    );
+
+    await interaction.channel.send({
+        content: `💰 **Payment submitted** ${staffRole ? `<@&${staffRole.id}>` : ""}`,
+        components: [verifyBtn],
+    });
+
+    await interaction.editReply({
+        content: "✅ تم تسجيل الدفع، في انتظار مراجعة الستاف.",
+    });
+}
+
+/* =========================
+   Staff Verify
+========================= */
+async function handleVerifyPayment(interaction, orderId) {
+    const staffRole = interaction.guild.roles.cache.find(
+        (r) => r.name === config.roleNames.staff,
+    );
+
+    if (
+        !staffRole ||
+        !interaction.member.roles.cache.has(staffRole.id)
+    ) {
+        return interaction.editReply({
+            content: "❌ Staff only.",
+        });
+    }
+
+    // 🧠 تأكد من حالة الأوردر
+    const order = await getOrder(orderId);
+
+    if (!order || order.status !== "payment_submitted") {
+        return interaction.editReply({
+            content:
+                "❌ Payment is not submitted yet or already verified.",
+        });
+    }
+
+    // ✅ تحديث الحالة
+    await updateOrder(orderId, {
+        status: "in_progress",
+    });
+
+    // 🔒 اقفل زر Verify
+    await interaction.message.edit({ components: [] });
+
+    await interaction.channel.send(
+        "🚀 **Payment verified. Order is now IN PROGRESS.**",
+    );
+
+    await interaction.editReply({
+        content: "✅ Order moved to IN PROGRESS.",
+    });
 }
 
 /* =========================
@@ -378,7 +449,9 @@ async function handleStaffComplete(interaction, orderId) {
     await interaction.channel.permissionOverwrites.edit(
         order.user_id,
         {
-            ViewChannel: false,
+            ViewChannel: true,
+            SendMessages: false,
+            AddReactions: false,
         },
     );
 
@@ -454,6 +527,17 @@ async function handlePaymentMethodSelection(interaction, orderId) {
             content: paymentData.info,
         });
     }
+    const paidButton = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`ticket_paid_${orderId}`)
+            .setLabel("💳 I Paid")
+            .setStyle(ButtonStyle.Primary),
+    );
+
+    await interaction.channel.send({
+        content: "بعد ما تدفع، دوس الزر ده 👇",
+        components: [paidButton],
+    });
 }
 
 module.exports = {
