@@ -17,16 +17,13 @@ function initDatabase() {
     return new Promise((resolve, reject) => {
         db = new sqlite3.Database(dbPath, async (err) => {
             if (err) {
-                console.error(
-                    "❌ Error opening database:",
-                    err
-                );
+                console.error("❌ Error opening database:", err);
                 reject(err);
                 return;
             }
 
             console.log(
-                `✅ Connected to SQLite database at: ${dbPath}`
+                `✅ Connected to SQLite database at: ${dbPath}`,
             );
 
             // 🧾 إنشاء جدول الأوردرات إذا لم يكن موجودًا
@@ -55,13 +52,22 @@ function initDatabase() {
                     if (err) {
                         console.error(
                             "❌ Error creating orders table:",
-                            err
+                            err,
                         );
                         reject(err);
                     } else {
-                        console.log("🗂️ Orders table ready - database.js:62");
+                        console.log(
+                            "🗂️ Orders table ready - database.js:62",
+                        );
 
-                        await addColumnIfNotExists("hours_amount", "TEXT");
+                        await addColumnIfNotExists(
+                            "hours_amount",
+                            "TEXT",
+                        );
+                        await addColumnIfNotExists(
+                            "custom_order_details",
+                            "TEXT",
+                        );
 
                         // 🧩 عمل نسخة احتياطية فقط لو الملف موجود مسبقًا
                         if (fs.existsSync(dbPath)) {
@@ -70,7 +76,7 @@ function initDatabase() {
 
                         resolve();
                     }
-                }
+                },
             );
         });
     });
@@ -81,10 +87,7 @@ function addColumnIfNotExists(column, type) {
     return new Promise((resolve) => {
         db.all(`PRAGMA table_info(orders);`, (err, rows) => {
             if (err) {
-                console.error(
-                    "❌ Error reading table info:",
-                    err
-                );
+                console.error("❌ Error reading table info:", err);
                 return resolve();
             }
 
@@ -96,15 +99,15 @@ function addColumnIfNotExists(column, type) {
                         if (err) {
                             console.error(
                                 `❌ Error adding column ${column}:`,
-                                err
+                                err,
                             );
                         } else {
                             console.log(
-                                `🆕 Column "${column}" added successfully.`
+                                `🆕 Column "${column}" added successfully.`,
                             );
                         }
                         resolve();
-                    }
+                    },
                 );
             } else {
                 resolve();
@@ -132,12 +135,10 @@ function createOrder(userId, serviceType, channelId) {
                 if (err) {
                     reject(err);
                 } else {
-                    console.log(
-                        `🟢 Created new order: ${orderId}`
-                    );
+                    console.log(`🟢 Created new order: ${orderId}`);
                     resolve(orderId);
                 }
-            }
+            },
         );
     });
 }
@@ -162,12 +163,10 @@ function updateOrder(orderId, data) {
                 if (err) {
                     reject(err);
                 } else {
-                    console.log(
-                        `🟠 Updated order: ${orderId}`
-                    );
+                    console.log(`🟠 Updated order: ${orderId}`);
                     resolve(this.changes);
                 }
-            }
+            },
         );
     });
 }
@@ -184,7 +183,7 @@ function getOrder(orderId) {
                 } else {
                     resolve(row);
                 }
-            }
+            },
         );
     });
 }
@@ -199,12 +198,10 @@ function deleteOrder(orderId) {
                 if (err) {
                     reject(err);
                 } else {
-                    console.log(
-                        `🔴 Deleted order: ${orderId}`
-                    );
+                    console.log(`🔴 Deleted order: ${orderId}`);
                     resolve(this.changes);
                 }
-            }
+            },
         );
     });
 }
@@ -219,11 +216,11 @@ function getCompletedOrders() {
                     reject(err);
                 } else {
                     console.log(
-                        `📦 Found ${rows.length} completed orders.`
+                        `📦 Found ${rows.length} completed orders.`,
                     );
                     resolve(rows);
                 }
-            }
+            },
         );
     });
 }
@@ -232,7 +229,9 @@ function getCompletedOrders() {
 async function backupDatabase() {
     try {
         if (!fs.existsSync(dbPath)) {
-            console.log("⚠️ No database found to back up. - database.js:235");
+            console.log(
+                "⚠️ No database found to back up. - database.js:235",
+            );
             return;
         }
 
@@ -241,15 +240,17 @@ async function backupDatabase() {
             .replace(/[:.]/g, "-")
             .replace("T", "_")
             .split("Z")[0];
-        const backupPath = path.join(dataDir, `orders_backup_${timestamp}.db`);
+        const backupPath = path.join(
+            dataDir,
+            `orders_backup_${timestamp}.db`,
+        );
 
         await fs.promises.copyFile(dbPath, backupPath);
-        console.log(`🧩 Backup created: ${backupPath} - database.js:247`);
-    } catch (error) {
-        console.error(
-            "⚠️ Failed to create database backup:",
-            error
+        console.log(
+            `🧩 Backup created: ${backupPath} - database.js:247`,
         );
+    } catch (error) {
+        console.error("⚠️ Failed to create database backup:", error);
     }
 }
 
