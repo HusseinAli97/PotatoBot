@@ -2,6 +2,7 @@ const convex = require("../convexClient");
 const {
     getOrder: getSQLiteOrder,
     updateOrder: updateSQLiteOrder,
+    deleteOrder: deleteSQLiteOrder,
 } = require("../database");
 
 /* =========================
@@ -92,7 +93,24 @@ async function updateOrder(orderId, data) {
     await updateSQLiteOrder(orderId, data);
     console.log("🟢 updateOrder in SQLite:", orderId, data);
 }
+async function deleteOrder(orderId) {
+    try {
+        if (!convex) throw new Error("Convex not available");
 
+        await convex.mutation("orders:deleteOrder", { orderId });
+
+        console.log("🟣 deleteOrder in Convex:", orderId);
+        return;
+    } catch (err) {
+        console.warn(
+            "⚠️ Convex deleteOrder failed, fallback to SQLite:",
+            err.message,
+        );
+    }
+
+    await deleteSQLiteOrder(orderId);
+    console.log("🟢 deleteOrder in SQLite:", orderId);
+}
 /* =========================
    NORMALIZER (Convex → App)
 ========================= */
@@ -117,4 +135,5 @@ function normalizeOrder(order) {
 module.exports = {
     getOrder,
     updateOrder,
+    deleteOrder,
 };
