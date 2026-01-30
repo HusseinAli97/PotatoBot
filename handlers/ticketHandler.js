@@ -8,7 +8,11 @@ const {
     StringSelectMenuBuilder,
 } = require("discord.js");
 
-const { getOrder, updateOrder, deleteOrder } = require("../database");
+const {
+    getOrder,
+    updateOrder,
+    deleteOrder,
+} = require("../data/orderRepository");
 const { createOrderDetailsEmbed } = require("../utils/embeds");
 const config = require("../config.json");
 
@@ -443,8 +447,6 @@ async function handlePaymentMethodSelection(interaction, orderId) {
         });
     }
 }
-const { getOrder } = require("../data/orderRepository");
-
 
 module.exports = {
     handleTicketInteraction,
