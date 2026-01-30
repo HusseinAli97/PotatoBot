@@ -7,9 +7,12 @@ const {
     ButtonStyle,
 } = require("discord.js");
 
-const { updateOrder } = require("../database");
 const convex = require("../convexClient");
-const { generateOrderId } = require("../database");
+const {
+    createOrder: createSQLiteOrder,
+    generateOrderId,
+} = require("../database");
+
 const {
     createTicketChannelPermissions,
 } = require("../utils/permissions");
@@ -64,23 +67,15 @@ async function handleOrderInteraction(interaction) {
             });
         }
 
+        let orderId;
+
+        // =========================
+        // 🟣 CREATE ORDER (Convex → SQLite fallback)
+        // =========================
         try {
-            const categoryName = getCategoryName(selectedService);
+            if (!convex) throw new Error("Convex not available");
 
-            let category = interaction.guild.channels.cache.find(
-                (c) =>
-                    c.type === ChannelType.GuildCategory &&
-                    c.name === categoryName,
-            );
-
-            if (!category) {
-                category = await interaction.guild.channels.create({
-                    name: categoryName,
-                    type: ChannelType.GuildCategory,
-                });
-            }
-
-            const orderId = generateOrderId();
+            orderId = generateOrderId();
 
             await convex.mutation("orders:createOrder", {
                 orderId,
@@ -88,73 +83,98 @@ async function handleOrderInteraction(interaction) {
                 serviceType: selectedService,
             });
 
-            const channelName = `${selectedService.replace("_", "-")}-${orderId.split("-")[1]}`;
-
-            const permissionOverwrites =
-                createTicketChannelPermissions(
-                    interaction.guild,
-                    interaction.user,
-                );
-
-            permissionOverwrites.push({
-                id: interaction.guild.members.me.id,
-                allow: [
-                    PermissionFlagsBits.ViewChannel,
-                    PermissionFlagsBits.SendMessages,
-                    PermissionFlagsBits.ReadMessageHistory,
-                    PermissionFlagsBits.EmbedLinks,
-                    PermissionFlagsBits.AttachFiles,
-                ],
-            });
-
-            const ticketChannel =
-                await interaction.guild.channels.create({
-                    name: channelName,
-                    type: ChannelType.GuildText,
-                    parent: category,
-                    permissionOverwrites,
-                });
-
-            await updateOrder(orderId, {
-                channel_id: ticketChannel.id,
-            });
-
-            const embed = createTicketEmbed(
-                serviceConfig.label,
-                orderId,
-                interaction.user,
+            console.log("🟣 Order created in Convex:", orderId);
+        } catch (err) {
+            console.error(
+                "⚠️ Convex failed, fallback to SQLite:",
+                err.message,
             );
 
-            const buttons = new ActionRowBuilder().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`ticket_confirm_${orderId}`)
-                    .setLabel("Confirm")
-                    .setStyle(ButtonStyle.Success)
-                    .setEmoji("✅"),
-                new ButtonBuilder()
-                    .setCustomId(`ticket_close_${orderId}`)
-                    .setLabel("Close")
-                    .setStyle(ButtonStyle.Danger)
-                    .setEmoji("❌"),
+            orderId = await createSQLiteOrder(
+                interaction.user.id,
+                selectedService,
+                null,
             );
 
-            await ticketChannel.send({
-                content: `<@${interaction.user.id}> your ticket has been created`,
-                embeds: [embed],
-                components: [buttons],
-            });
+            console.log("🟢 Order created in SQLite:", orderId);
+        }
 
-            await interaction.editReply({
-                content: `✅ Ticket created successfully: ${ticketChannel}`,
-            });
-        } catch (error) {
-            console.error("Order creation error:", error);
+        // =========================
+        // 🧱 CREATE CHANNEL
+        // =========================
+        const categoryName = getCategoryName(selectedService);
 
-            await interaction.editReply({
-                content:
-                    "❌ Failed to create ticket. Please contact staff.",
+        let category = interaction.guild.channels.cache.find(
+            (c) =>
+                c.type === ChannelType.GuildCategory &&
+                c.name === categoryName,
+        );
+
+        if (!category) {
+            category = await interaction.guild.channels.create({
+                name: categoryName,
+                type: ChannelType.GuildCategory,
             });
         }
+
+        const channelName = `${selectedService.replace(
+            "_",
+            "-",
+        )}-${orderId.split("-")[1]}`;
+
+        const permissionOverwrites = createTicketChannelPermissions(
+            interaction.guild,
+            interaction.user,
+        );
+
+        permissionOverwrites.push({
+            id: interaction.guild.members.me.id,
+            allow: [
+                PermissionFlagsBits.ViewChannel,
+                PermissionFlagsBits.SendMessages,
+                PermissionFlagsBits.ReadMessageHistory,
+                PermissionFlagsBits.EmbedLinks,
+                PermissionFlagsBits.AttachFiles,
+            ],
+        });
+
+        const ticketChannel = await interaction.guild.channels.create(
+            {
+                name: channelName,
+                type: ChannelType.GuildText,
+                parent: category,
+                permissionOverwrites,
+            },
+        );
+
+        const embed = createTicketEmbed(
+            serviceConfig.label,
+            orderId,
+            interaction.user,
+        );
+
+        const buttons = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`ticket_confirm_${orderId}`)
+                .setLabel("Confirm")
+                .setStyle(ButtonStyle.Success)
+                .setEmoji("✅"),
+            new ButtonBuilder()
+                .setCustomId(`ticket_close_${orderId}`)
+                .setLabel("Close")
+                .setStyle(ButtonStyle.Danger)
+                .setEmoji("❌"),
+        );
+
+        await ticketChannel.send({
+            content: `<@${interaction.user.id}> your ticket has been created`,
+            embeds: [embed],
+            components: [buttons],
+        });
+
+        await interaction.editReply({
+            content: `✅ Ticket created successfully: ${ticketChannel}`,
+        });
     }
 }
 
