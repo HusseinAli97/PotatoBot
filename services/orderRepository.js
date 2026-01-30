@@ -17,7 +17,7 @@ async function getOrder(orderId) {
 
         if (order) {
             console.log("🟣 getOrder from Convex:", orderId);
-            return order;
+            return normalizeOrder(order);
         }
     } catch (err) {
         console.warn(
@@ -28,11 +28,11 @@ async function getOrder(orderId) {
 
     const sqliteOrder = await getSQLiteOrder(orderId);
     console.log("🟢 getOrder from SQLite:", orderId);
-    return sqliteOrder;
+    return normalizeOrder(sqliteOrder);
 }
 
 /* =========================
-   FIELD MAPPER
+   FIELD MAPPER (SQLite → Convex)
 ========================= */
 function mapToConvexFields(data) {
     const mapped = {};
@@ -69,9 +69,15 @@ async function updateOrder(orderId, data) {
 
         const mappedData = mapToConvexFields(data);
 
+        // 🛑 مهم: لو مفيش حاجة تتحدث، بلاش نكلم Convex
+        if (Object.keys(mappedData).length === 0) {
+            console.warn("⚠️ No fields to update in Convex");
+            return;
+        }
+
         await convex.mutation("orders:updateOrder", {
             orderId,
-            ...mappedData,
+            data: mappedData,
         });
 
         console.log("🟣 updateOrder in Convex:", orderId, mappedData);
@@ -85,6 +91,27 @@ async function updateOrder(orderId, data) {
 
     await updateSQLiteOrder(orderId, data);
     console.log("🟢 updateOrder in SQLite:", orderId, data);
+}
+
+/* =========================
+   NORMALIZER (Convex → App)
+========================= */
+function normalizeOrder(order) {
+    if (!order) return null;
+
+    return {
+        ...order,
+        battle_tag: order.battle_tag ?? order.battleTag ?? null,
+        pilot_type: order.pilot_type ?? order.pilotType ?? null,
+        express_type: order.express_type ?? order.expressType ?? null,
+        custom_order_details:
+            order.custom_order_details ??
+            order.customOrderDetails ??
+            null,
+        payment_method:
+            order.payment_method ?? order.paymentMethod ?? null,
+        user_id: order.user_id ?? order.userId ?? null,
+    };
 }
 
 module.exports = {
