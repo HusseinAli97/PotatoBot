@@ -443,6 +443,9 @@ async function handlePaymentMethodSelection(interaction, orderId) {
         });
     }
 }
+const { getOrder } = require("../data/orderRepository");
+
+
 module.exports = {
     handleTicketInteraction,
 };

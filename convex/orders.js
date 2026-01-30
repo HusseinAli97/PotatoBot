@@ -37,3 +37,27 @@ export const getOrderByOrderId = query({
             .first();
     },
 });
+
+/**update order */
+export const updateOrder = mutation({
+    args: {
+        orderId: v.string(),
+        data: v.any(),
+    },
+    handler: async (ctx, args) => {
+        const order = await ctx.db
+            .query("orders")
+            .withIndex("by_orderId", (q) =>
+                q.eq("orderId", args.orderId),
+            )
+            .first();
+
+        if (!order) {
+            throw new Error("Order not found");
+        }
+
+        await ctx.db.patch(order._id, {
+            ...args.data,
+        });
+    },
+});
