@@ -240,6 +240,27 @@ async function handleOrderForm(interaction, orderId) {
         components: [paymentSelect],
     });
 
+    // =========================
+    // 🛠️ STAFF CONTROL BUTTONS
+    // =========================
+    const staffControls = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`ticket_cancel_${orderId}`)
+            .setLabel("Cancel")
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji("❌"),
+        new ButtonBuilder()
+            .setCustomId(`ticket_complete_${orderId}`)
+            .setLabel("Complete")
+            .setStyle(ButtonStyle.Success)
+            .setEmoji("✅"),
+    );
+
+    // إرسال أزرار التحكم للستاف
+    await interaction.channel.send({
+        content: "🛠️ **Staff controls:**",
+        components: [staffControls],
+    });
     // 4️⃣ نقفل الـ modal interaction
     await interaction.editReply({
         content: "✅ Order confirmed successfully.",
@@ -279,6 +300,9 @@ async function handleStaffCancel(interaction, orderId) {
    STAFF COMPLETE
 ========================= */
 async function handleStaffComplete(interaction, orderId) {
+    // =========================
+    // 🔐 PERMISSION CHECK
+    // =========================
     const staffRole = interaction.guild.roles.cache.find(
         (r) => r.name === config.roleNames.staff,
     );
@@ -292,13 +316,104 @@ async function handleStaffComplete(interaction, orderId) {
         });
     }
 
+    // =========================
+    // 📦 GET ORDER
+    // =========================
+    const order = await getOrder(orderId);
+    if (!order) {
+        return interaction.editReply({
+            content: "❌ Order not found.",
+        });
+    }
+
+    // =========================
+    // 🗄️ UPDATE DATABASE
+    // =========================
     await updateOrder(orderId, {
         status: "completed",
         completed_at: new Date().toISOString(),
     });
 
+    // =========================
+    // 📅 CATEGORY (MONTH / YEAR)
+    // =========================
+    const now = new Date();
+    const month = now.toLocaleString("en-US", { month: "short" });
+    const year = now.getFullYear();
+
+    const categoryName = `Completed Orders [${month}-${year}]`;
+
+    let completedCategory = interaction.guild.channels.cache.find(
+        (c) =>
+            c.type === 4 && // GuildCategory
+            c.name === categoryName,
+    );
+
+    if (!completedCategory) {
+        completedCategory = await interaction.guild.channels.create({
+            name: categoryName,
+            type: 4,
+        });
+    }
+
+    // =========================
+    // 🚚 MOVE CHANNEL
+    // =========================
+    await interaction.channel.setParent(completedCategory.id);
+
+    // =========================
+    // 🔒 UPDATE PERMISSIONS
+    // =========================
+    // إخفاء القناة عن العميل
+    await interaction.channel.permissionOverwrites.edit(
+        order.user_id,
+        {
+            ViewChannel: false,
+        },
+    );
+
+    // التأكد إن الستاف شايف
+    if (staffRole) {
+        await interaction.channel.permissionOverwrites.edit(
+            staffRole.id,
+            {
+                ViewChannel: true,
+                SendMessages: true,
+                ReadMessageHistory: true,
+            },
+        );
+    }
+
+    // =========================
+    // 🧹 DISABLE INTERACTIONS
+    // =========================
+    try {
+        const messages = await interaction.channel.messages.fetch({
+            limit: 10,
+        });
+
+        const botMessages = messages.filter(
+            (m) =>
+                m.author.id === interaction.client.user.id &&
+                m.components.length > 0,
+        );
+
+        for (const msg of botMessages.values()) {
+            await msg.edit({ components: [] });
+        }
+    } catch (e) {
+        // تجاهل أي خطأ (اختياري)
+    }
+
+    // =========================
+    // 📢 FINAL MESSAGES
+    // =========================
+    await interaction.channel.send(
+        "📁 **Order completed and archived.**",
+    );
+
     await interaction.editReply({
-        content: "✅ Order marked as completed.",
+        content: "✅ Order marked as completed and archived.",
     });
 }
 
@@ -308,13 +423,23 @@ async function handleStaffComplete(interaction, orderId) {
 async function handlePaymentMethodSelection(interaction, orderId) {
     const paymentMethod = interaction.values[0];
 
+    // 1️⃣ تخزين وسيلة الدفع
     await updateOrder(orderId, { payment_method: paymentMethod });
 
-    await interaction.editReply({
-        content: `✅ Payment method selected: **${paymentMethod}**`,
-    });
-}
+    // 2️⃣ نجيب بيانات الدفع من config
+    const paymentData = config.paymentMethods.find(
+        (pm) => pm.value === paymentMethod,
+    );
 
-module.exports = {
-    handleTicketInteraction,
-};
+    // 3️⃣ نرد على الاختيار
+    await interaction.editReply({
+        content: `✅ Payment method selected: **${paymentData?.label || paymentMethod}**`,
+    });
+
+    // 4️⃣ نعرض بيانات الدفع (زي زمان)
+    if (paymentData?.info) {
+        await interaction.channel.send({
+            content: paymentData.info,
+        });
+    }
+}
