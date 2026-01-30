@@ -132,7 +132,10 @@ async function handleTicketConfirm(interaction, orderId) {
     ];
 
     // ✅ Custom Order فقط
-    if (order.service_type === "custom_order") {
+    if (
+        order.serviceType === "custom_order" ||
+        order.service_type === "custom_order"
+    ) {
         const customDetailsInput = new TextInputBuilder()
             .setCustomId("custom_order_details")
             .setLabel("Describe your custom order")
@@ -174,7 +177,10 @@ async function handleOrderForm(interaction, orderId) {
         status: "confirmed",
     };
 
-    if (order.service_type === "custom_order") {
+    if (
+        order.serviceType === "custom_order" ||
+        order.service_type === "custom_order"
+    ) {
         updateData.custom_order_details =
             interaction.fields.getTextInputValue(
                 "custom_order_details",

@@ -177,7 +177,10 @@ function createOrderDetailsEmbed(order, user) {
         });
     }
 
-    if (order.service_type === "custom_order") {
+    if (
+        order.serviceType === "custom_order" ||
+        order.service_type === "custom_order"
+    ) {
         embed.addFields({
             name: "📝 Custom Requirements",
             value: safe(
