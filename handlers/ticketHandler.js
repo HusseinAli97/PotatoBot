@@ -92,7 +92,7 @@ async function handleClientPaid(interaction, orderId) {
     });
 
     await interaction.editReply({
-        content: "✅ تم تسجيل الدفع، في انتظار مراجعة الستاف.",
+        content: "✅ Payment has been processed, pending staff review.",
     });
 }
 
@@ -535,7 +535,7 @@ async function handlePaymentMethodSelection(interaction, orderId) {
     );
 
     await interaction.channel.send({
-        content: "بعد ما تدفع، دوس الزر ده 👇",
+        content: "👇 Click Here After u Pay",
         components: [paidButton],
     });
 }
