@@ -92,7 +92,8 @@ async function handleClientPaid(interaction, orderId) {
     });
 
     await interaction.editReply({
-        content: "✅ Payment has been processed, pending staff review.",
+        content:
+            "✅ Payment has been processed, pending staff review.",
     });
 }
 
@@ -445,7 +446,16 @@ async function handleStaffComplete(interaction, orderId) {
     // =========================
     // 🔒 UPDATE PERMISSIONS
     // =========================
-    // إخفاء القناة عن العميل
+
+    // ❌ اخفاء القناة عن الجميع
+    await interaction.channel.permissionOverwrites.edit(
+        interaction.guild.roles.everyone,
+        {
+            ViewChannel: false,
+        },
+    );
+
+    // 👤 السماح للعميل بالقراءة فقط
     await interaction.channel.permissionOverwrites.edit(
         order.user_id,
         {
@@ -455,7 +465,7 @@ async function handleStaffComplete(interaction, orderId) {
         },
     );
 
-    // التأكد إن الستاف شايف
+    // 🧑‍💼 السماح للستاف
     if (staffRole) {
         await interaction.channel.permissionOverwrites.edit(
             staffRole.id,
